@@ -1,0 +1,5 @@
+FastAPI[standard]
+python-dotenv
+mysql-connector-python
+PyJWT
+bcrypt
