@@ -14,6 +14,19 @@ class Login(BaseModel):
         }
     }
 
+class Login2FA(BaseModel):
+    username: str
+    password: str
+    code: str
+    model_config = {
+        "json_schema_extra":{
+            "example":{
+                "username":"admin",
+                "password":"admin"
+            }
+        }
+    }
+
 class EndDay(BaseModel):
     adminPassword: str
     model_config = {
@@ -46,12 +59,3 @@ class Verify2FA(BaseModel):
         }
     }
 
-class CheckSession(BaseModel):
-    token: str
-    model_config = {
-        "json_schema_extra":{
-            "example":{
-                "token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwiZXhwIjoxNzM2MTE2NDAwfQ.abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
-            }
-        }
-    }

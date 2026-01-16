@@ -92,22 +92,22 @@ class Verify2FA404(BaseModel):
         }
     }
 
-class CheckSession200(BaseModel):
+class VerifySession200(BaseModel):
     time: str
     model_config = {
         "json_schema_extra":{
             "example":{
-                "message":"Sesion valida"
+                "message":"Ok"
             }
         }
     }
 
-class CheckSession400(BaseModel):
+class VerifySession401(BaseModel):
     time: str
     model_config = {
         "json_schema_extra":{
             "example":{
-                "Error":"Sesion invalida"
+                "Error":"Token inválido o expirado"
             }
         }
     }
