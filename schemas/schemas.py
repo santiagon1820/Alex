@@ -30,13 +30,84 @@ class Login400(BaseModel):
             }
         }
     }
-class GetSerial200(BaseModel):
+
+class EndDay200(BaseModel):
     time: str
     model_config = {
         "json_schema_extra":{
             "example":{
-                "token": "27-...",
-                "expires_at": "27-11-2026"
+                "message":"Sesiones cerradas exitosamente"
+            }
+        }
+    }
+
+class GenerateSecret200(BaseModel):
+    time: str
+    model_config = {
+        "json_schema_extra":{
+            "example":{
+                "secret":"ABCDEFGHIJKLMNOPQRSTUV1234567890",
+                "url":"otpauth://totp/username?secret=ABCDEFGHIJKLMNOPQRSTUV1234567890"
+            }
+        }
+    }
+
+class GenerateSecret404(BaseModel):
+    time: str
+    model_config = {
+        "json_schema_extra":{
+            "example":{
+                "Error":"Usuario no encontrado"
+            }
+        }
+    }
+
+class GenerateSecret400(BaseModel):
+    time: str
+    model_config = {
+        "json_schema_extra":{
+            "example":{
+                "Error":"El usuario ya tiene un secreto activado"
+            }
+        }
+    }
+
+class Verify2FA200(BaseModel):
+    time: str
+    model_config = {
+        "json_schema_extra":{
+            "example":{
+                "message":"Codigo 2FA verificado exitosamente"
+            }
+        }
+    }
+
+class Verify2FA404(BaseModel):
+    time: str
+    model_config = {
+        "json_schema_extra":{
+            "example":{
+                "Error":"Código 2FA incorrecto o expirado"
+            }
+        }
+    }
+
+class CheckSession200(BaseModel):
+    time: str
+    model_config = {
+        "json_schema_extra":{
+            "example":{
+                "message":"Sesion valida"
+            }
+        }
+    }
+
+class CheckSession400(BaseModel):
+    time: str
+    model_config = {
+        "json_schema_extra":{
+            "example":{
+                "Error":"Sesion invalida"
             }
         }
     }

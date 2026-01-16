@@ -9,6 +9,8 @@ from fastapi.security import HTTPBearer
 # Importar archivos necesarios
 import schemas.schemas as Schemas
 import controllers.AuthController as AuthController
+import controllers.CRONController as CronController
+import controllers.TwoFAController as TwoFAController
 
 # Importamos schemas
 import schemas.Payload as schemasPayload
@@ -51,31 +53,60 @@ def read_root():
     }
 )
 def login(data: schemasPayload.Login):
-    return AuthController.login(data.username, data.password)
+    return AuthController.login(data.username, data.password, data.code)
 
-# Endpoint GetSerial
-@app.get(
-    "/api/getSerial",
-    tags=["Tools"],
-    summary="Obtener serial",
+# Endpoint para comprobar si tiene una sesion abierta y es valida
+@app.post(
+    "/api/checkSession",
+    tags=["Auth"],
+    summary="Comprobar si tiene una sesion abierta y es valida",
     responses={
-        200: {"model": Schemas.GetSerial200},
+        200: {"model": Schemas.CheckSession200},
+        400: {"model": Schemas.CheckSession400},
         500: {"model": Schemas.InternalServerError}
     }
 )
-def getserial(request: Request):
-    return AuthController.generate_device_cookie(request)
+def check_session(data: schemasPayload.CheckSession):
+    return AuthController.check_session(data.token)
 
-# Endpoint RenewSerial
-@app.get(
-    "/api/renewSerial",
-    tags=["Tools"],
-    summary="Renovar serial",
+# Endpoint para cerrar todas las sesiones (CRON)
+@app.post(
+    "/api/endDay",
+    tags=["CRON"],
+    summary="Cerrar todas las sesiones",
     responses={
-        200: {"model": Schemas.GetSerial200},
-        202: {"model": Schemas.GetSerial200},
+        200: {"model": Schemas.EndDay200},
         500: {"model": Schemas.InternalServerError}
     }
 )
-def getserial(request: Request):
-    return AuthController.renew_device_cookie(request)
+def endDay(data: schemasPayload.EndDay):
+    return CronController.endDay(data.adminPassword)
+
+# Endpoint para generar secreto 2FA
+@app.post(
+    "/api/generateSecret",
+    tags=["2FA"],
+    summary="Generar secreto 2FA",
+    responses={
+        200: {"model": Schemas.GenerateSecret200},
+        404: {"model": Schemas.GenerateSecret404},
+        400: {"model": Schemas.GenerateSecret400},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+def generateSecret(data: schemasPayload.GenerateSecret):
+    return TwoFAController.generate_secret(data.username)
+
+# Endpoint para configurar codigo 2FA
+@app.post(
+    "/api/config2FA",
+    tags=["2FA"],
+    summary="Configurar codigo 2FA",
+    responses={
+        200: {"model": Schemas.Verify2FA200},
+        404: {"model": Schemas.Verify2FA404},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+def config2FA(data: schemasPayload.Verify2FA):
+    return TwoFAController.config2FA(data.username, data.code)

@@ -2,10 +2,12 @@ import models.db as DB
 import os
 import bcrypt
 import jwt
+import subprocess
 from fastapi.responses import JSONResponse
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from fastapi import Request
+from controllers.TwoFAController import verify_code
 
 # Cargamos variables de entorno
 load_dotenv()
@@ -14,12 +16,21 @@ JWT_SECRET = os.getenv("JWT_SECRET")
 JWT_EXPIRES_IN = os.getenv("JWT_EXPIRES_IN")
 
 # Función para hacer un login
-def login(username, password):
+def login(username, password, code):
     try:
-        # 1 Verificar que las credenciales sean válidas
+        # 1 Verificar codigo 2FA
+        if not verify_code(username, code):
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "Error": "Credenciales incorrectas"
+                }
+            )
+
+        # 2 Verificar que las credenciales sean válidas
         respuesta = DB.GETDB("SELECT id, email, password FROM users WHERE username = %s", (username,))
         if respuesta != []:
-            # 2 Generar token de acceso 
+            # 3 Generar token de acceso 
 
             # Tomar primer usuario encontrado
             user = respuesta[0] 
@@ -35,19 +46,28 @@ def login(username, password):
                 # Generar el token con el payload  
                 token = jwt.encode(payload, JWT_SECRET, algorithm="HS256") 
 
-                # 3 Guardar la session en la BD
+                # 4 Guardar la session en la BD
 
                 # Expira en 24 horas
 
                 # Generar fecha de expiracion
                 expires_at = datetime.now() + timedelta(hours=24)
-                # Insertar en la DB
-                DB.POSTDB(
+                
+                # Verificar si el usuario ya tiene una sesion activa
+                session = DB.GETDB("SELECT id FROM user_sessions WHERE user_id = %s", (user["id"],)) 
+                if session != []:
+                    # Actualizar la sesion
+                    DB.POSTDB("UPDATE user_sessions SET token = %s, isActive = %s, expires_at = %s WHERE user_id = %s", 
+                    (token, 1, expires_at, user["id"])
+                    )
+                else:
+                    # Insertar en la DB
+                    DB.POSTDB(
                     "INSERT INTO user_sessions (user_id, token, isActive, expires_at) VALUES (%s, %s, %s, %s)",
                     (user["id"], token, 1, expires_at)
-                )
-                
-                # 4 Crear respuesta con cookie
+                    )
+
+                # 5 Crear respuesta con cookie
 
                 # Generar la respuesta
                 response = JSONResponse(
@@ -108,4 +128,3 @@ def login(username, password):
 def hash_password(password):
     ROUNDS = int(os.getenv("ROUNDS"))
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(ROUNDS))
-
