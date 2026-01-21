@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 class InternalServerError(BaseModel):
-    time: str
+    Error: str
     model_config = {
         "json_schema_extra":{
             "example":{
@@ -11,7 +11,8 @@ class InternalServerError(BaseModel):
     }
 
 class Login200(BaseModel):
-    time: str
+    message: str
+    token: str
     model_config = {
         "json_schema_extra":{
             "example":{
@@ -22,7 +23,7 @@ class Login200(BaseModel):
     }
 
 class Login400(BaseModel):
-    time: str
+    Error: str
     model_config = {
         "json_schema_extra":{
             "example":{
@@ -32,7 +33,7 @@ class Login400(BaseModel):
     }
 
 class EndDay200(BaseModel):
-    time: str
+    message: str
     model_config = {
         "json_schema_extra":{
             "example":{
@@ -42,7 +43,8 @@ class EndDay200(BaseModel):
     }
 
 class GenerateSecret200(BaseModel):
-    time: str
+    secret: str
+    url: str
     model_config = {
         "json_schema_extra":{
             "example":{
@@ -53,7 +55,7 @@ class GenerateSecret200(BaseModel):
     }
 
 class GenerateSecret404(BaseModel):
-    time: str
+    Error: str
     model_config = {
         "json_schema_extra":{
             "example":{
@@ -63,7 +65,7 @@ class GenerateSecret404(BaseModel):
     }
 
 class GenerateSecret400(BaseModel):
-    time: str
+    Error: str
     model_config = {
         "json_schema_extra":{
             "example":{
@@ -73,7 +75,7 @@ class GenerateSecret400(BaseModel):
     }
 
 class Verify2FA200(BaseModel):
-    time: str
+    message: str
     model_config = {
         "json_schema_extra":{
             "example":{
@@ -83,7 +85,7 @@ class Verify2FA200(BaseModel):
     }
 
 class Verify2FA404(BaseModel):
-    time: str
+    Error: str
     model_config = {
         "json_schema_extra":{
             "example":{
@@ -93,7 +95,7 @@ class Verify2FA404(BaseModel):
     }
 
 class VerifySession200(BaseModel):
-    time: str
+    message: str
     model_config = {
         "json_schema_extra":{
             "example":{
@@ -103,7 +105,7 @@ class VerifySession200(BaseModel):
     }
 
 class VerifySession401(BaseModel):
-    time: str
+    Error: str
     model_config = {
         "json_schema_extra":{
             "example":{

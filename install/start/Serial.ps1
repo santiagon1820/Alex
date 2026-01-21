@@ -1,1 +1,0 @@
-Start-Process -FilePath "python" -ArgumentList "c:\ServerClient\serial.py" -WindowStyle Hidden

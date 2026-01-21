@@ -17,7 +17,6 @@ class Login(BaseModel):
 class Login2FA(BaseModel):
     username: str
     password: str
-    code: str
     model_config = {
         "json_schema_extra":{
             "example":{
@@ -58,4 +57,3 @@ class Verify2FA(BaseModel):
             }
         }
     }
-

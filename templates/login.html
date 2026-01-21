@@ -1,50 +1,85 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Login Test</title>
-</head>
-<body>
-    <h2>Login Test</h2>
-    <form id="loginForm">
-        <label>Username:</label>
-        <input type="text" id="username" required>
-        <br><br>
-        <label>Password:</label>
-        <input type="password" id="password" required>
-        <br><br>
-        <button type="submit">Login</button>
-    </form>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Iniciar Sesión | MgLab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/login.css" />
+  </head>
+  <body>
+    <div class="container">
+      <main class="card">
+        <header class="logo-container">
+          <h1>MgLab</h1>
+          <p>Bienvenido de nuevo</p>
+        </header>
 
-    <script>
-        const form = document.getElementById("loginForm");
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="username">Usuario</label>
+            <div class="input-wrapper">
+              <input
+                type="text"
+                id="username"
+                placeholder="Tu nombre de usuario"
+                autocomplete="username"
+                autocorrect="off"
+                autocapitalize="none"
+                required
+              />
+            </div>
+          </div>
 
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
+          <div class="form-group">
+            <label for="password">Contraseña</label>
+            <div class="input-wrapper">
+              <input
+                type="password"
+                id="password"
+                placeholder="••••••••"
+                autocomplete="current-password"
+                autocorrect="off"
+                autocapitalize="none"
+                required
+              />
+            </div>
+          </div>
 
-            const username = document.getElementById("username").value;
-            const password = document.getElementById("password").value;
+          <div class="form-group otp-group">
+            <label for="twofaCode">Código 2FA</label>
+            <div class="input-wrapper">
+              <input
+                type="text"
+                id="twofaCode"
+                placeholder="000000"
+                maxlength="6"
+                pattern="\d{6}"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                required
+              />
+            </div>
+          </div>
 
-            try {
-                const res = await fetch("/api/login", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ username, password }),
-                    credentials: "include" // <- importante para cookies
-                });
+          <button type="submit" id="loginBtn">Entrar</button>
+        </form>
 
-                const data = await res.json();
-                console.log("Respuesta del backend:", data);
+        <div id="loginMessage" class="message hidden"></div>
+      </main>
 
-                // Verificar cookies
-                console.log("Cookies actuales:", document.cookie);
+      <footer>
+        <p>
+          ¿Problemas con tu cuenta? <a href="/tickets">Abre un ticket</a>
+        </p>
+      </footer>
+    </div>
 
-            } catch (err) {
-                console.error("Error al hacer login:", err);
-            }
-        });
-    </script>
-</body>
+    <script src="/js/login.js"></script>
+  </body>
 </html>

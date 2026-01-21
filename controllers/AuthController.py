@@ -3,6 +3,7 @@ import os
 import bcrypt
 import jwt
 import subprocess
+import controllers.VerifyTokenController as VerifyTokenController
 from fastapi.responses import JSONResponse
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -28,7 +29,7 @@ def login(username, password, code):
             )
 
         # 2 Verificar que las credenciales sean válidas
-        respuesta = DB.GETDB("SELECT id, email, password FROM users WHERE username = %s", (username,))
+        respuesta = DB.GETDB("SELECT id, email, password, username FROM users WHERE username = %s", (username,))
         if respuesta != []:
             # 3 Generar token de acceso 
 
@@ -41,6 +42,8 @@ def login(username, password, code):
                 payload = {
                     "user_id": user["id"],
                     "email": user["email"],
+                    "username": user["username"],
+                    "scope": "full",
                     "exp": datetime.utcnow() + timedelta(seconds=int(JWT_EXPIRES_IN))
                 }   
                 # Generar el token con el payload  
@@ -128,7 +131,7 @@ def login(username, password, code):
 def login2FA(username, password):
     try:
         # 1 Verificar credenciales
-        respuesta = DB.GETDB("SELECT id, email, password FROM users WHERE username = %s", (username,))
+        respuesta = DB.GETDB("SELECT id, email, password, username FROM users WHERE username = %s", (username,))
         if respuesta != []:
             # 2 Generar token de acceso 
 
@@ -141,6 +144,8 @@ def login2FA(username, password):
                 payload = {
                     "user_id": user["id"],
                     "email": user["email"],
+                    "username": user["username"],
+                    "scope": "2fa_setup",
                     "exp": datetime.utcnow() + timedelta(seconds=int(JWT_EXPIRES_IN))
                 }   
                 # Generar el token con el payload  

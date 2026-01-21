@@ -1,21 +1,21 @@
 # Importamos librerias que vayamos a utilizar 
-from fastapi import FastAPI
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import FastAPI, Depends
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.requests import Request
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.security import HTTPBearer
 
-# Importar archivos necesarios
-import schemas.schemas as Schemas
+# Importar controladores
+import controllers.AdminController as AdminController
 import controllers.AuthController as AuthController
 import controllers.CRONController as CronController
 import controllers.TwoFAController as TwoFAController
 import controllers.VerifyTokenController as VerifyTokenController
-from fastapi import Depends
 
 # Importamos schemas
 import schemas.Payload as schemasPayload
+import schemas.Schemas as Schemas
 
 # Crear app
 app = FastAPI(
@@ -28,7 +28,7 @@ app = FastAPI(
 app.mount("/js", StaticFiles(directory="templates/js"), name="js")
 app.mount("/css", StaticFiles(directory="templates/css"), name="css")
 
-# Definimos pagina de 404
+# Definimos pagina de 404 y manejo de errores
 @app.exception_handler(StarletteHTTPException)
 async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
     if exc.status_code == 404:
@@ -37,20 +37,36 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
     # Si el detalle es un diccionario (como el que enviamos en verify_token), lo usamos directamente
     content = exc.detail if isinstance(exc.detail, dict) else {"detail": exc.detail}
     
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=content
-    )
+    # Verificar si debemos eliminar la cookie
+    if isinstance(content, dict) and content.pop("clear_cookie", None):
+        response = JSONResponse(
+            status_code=exc.status_code,
+            content=content
+        )
+        response.delete_cookie("token", path="/")
+    else:
+        response = JSONResponse(
+            status_code=exc.status_code,
+            content=content
+        )
+    
+    return response
 
 # ----------- FRONTEND ----------- #
 @app.get("/", include_in_schema=False)
 def read_root():
     return FileResponse("templates/index.html")
+
 @app.get("/login", include_in_schema=False)
-def read_root():
+def read_login(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    if is_logged_in:
+        return RedirectResponse(url="/")
     return FileResponse("templates/login.html")
+
 @app.get("/2FA", include_in_schema=False)
-def read_root():
+def read_2fa(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    if is_logged_in:
+        return RedirectResponse(url="/")
     return FileResponse("templates/2FA.html")
 
 # ----------- BACKEND ----------- #
@@ -65,7 +81,12 @@ def read_root():
         500: {"model": Schemas.InternalServerError}
     }
 )
-def login(data: schemasPayload.Login):
+def login(data: schemasPayload.Login, is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    if is_logged_in:
+        return JSONResponse(
+            status_code=400,
+            content={"Error": "Ya tienes una sesión activa"}
+        )
     return AuthController.login(data.username, data.password, data.code)
 
 # Endpoint para iniciar sesion en el panel para añadir 2FA
@@ -79,7 +100,12 @@ def login(data: schemasPayload.Login):
         500: {"model": Schemas.InternalServerError}
     }
 )
-def login(data: schemasPayload.Login2FA):
+def login(data: schemasPayload.Login2FA, is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    if is_logged_in:
+        return JSONResponse(
+            status_code=400,
+            content={"Error": "Ya tienes una sesión activa"}
+        )
     return AuthController.login2FA(data.username, data.password)
 
 # Endpoint para verificar sesion
@@ -95,6 +121,22 @@ def login(data: schemasPayload.Login2FA):
     dependencies=[Depends(VerifyTokenController.verify_token)]
 )
 def verifySession(token_data: dict = Depends(VerifyTokenController.verify_token)):
+    return {
+        "message": "Ok"
+    }
+
+@app.get(
+    "/api/isLogin2FA",
+    tags=["Auth"],
+    summary="Verificar sesión 2FA",
+    responses={
+        200: {"model": Schemas.VerifySession200},
+        401: {"model": Schemas.VerifySession401},
+        500: {"model": Schemas.InternalServerError}
+    },
+    dependencies=[Depends(VerifyTokenController.verify_token_2fa)]
+)
+def verifySession2FA(token_data: dict = Depends(VerifyTokenController.verify_token_2fa)):
     return {
         "message": "Ok"
     }
@@ -121,12 +163,14 @@ def endDay(data: schemasPayload.EndDay):
         200: {"model": Schemas.GenerateSecret200},
         404: {"model": Schemas.GenerateSecret404},
         400: {"model": Schemas.GenerateSecret400},
+        401: {"model": Schemas.VerifySession401},
         500: {"model": Schemas.InternalServerError}
     },
-    dependencies=[Depends(VerifyTokenController.verify_token)]
+    dependencies=[Depends(VerifyTokenController.verify_token_2fa)]
 )
-def generateSecret(data: schemasPayload.GenerateSecret):
-    return TwoFAController.generate_secret(data.username)
+def generateSecret(data: schemasPayload.GenerateSecret, token_data: dict = Depends(VerifyTokenController.verify_token_2fa)):
+    username = token_data.get("username") or data.username
+    return TwoFAController.generate_secret(username)
 
 # Endpoint para configurar codigo 2FA
 @app.post(
@@ -136,9 +180,11 @@ def generateSecret(data: schemasPayload.GenerateSecret):
     responses={
         200: {"model": Schemas.Verify2FA200},
         404: {"model": Schemas.Verify2FA404},
+        401: {"model": Schemas.VerifySession401},
         500: {"model": Schemas.InternalServerError}
     },
-    dependencies=[Depends(VerifyTokenController.verify_token)]
+    dependencies=[Depends(VerifyTokenController.verify_token_2fa)]
 )
-def config2FA(data: schemasPayload.Verify2FA):
-    return TwoFAController.config2FA(data.username, data.code)
+def config2FA(data: schemasPayload.Verify2FA, token_data: dict = Depends(VerifyTokenController.verify_token_2fa)):
+    username = token_data.get("username") or data.username
+    return TwoFAController.config2FA(username, data.code)

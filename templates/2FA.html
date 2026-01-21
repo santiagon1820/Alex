@@ -7,57 +7,58 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/2fa.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
-    <div class="container">
+    <div class="container hidden">
         <!-- 1. Login Section -->
-        <div id="loginSection" class="card">
-            <div class="logo-container">
+        <main id="loginSection" class="card hidden">
+            <header class="logo-container">
                 <h1>MgLab</h1>
                 <p>Configuración de Seguridad 2FA</p>
-            </div>
+            </header>
             <form id="loginForm">
                 <div class="form-group">
                     <label for="username">Usuario</label>
-                    <input type="text" id="username" placeholder="Ingresa tu usuario" required>
+                    <input type="text" id="username" placeholder="Ingresa tu usuario" autocomplete="username" required>
                 </div>
                 <div class="form-group">
                     <label for="password">Contraseña</label>
-                    <input type="password" id="password" placeholder="••••••••" required>
+                    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
                 </div>
                 <button type="submit" id="loginBtn">Continuar</button>
             </form>
-            <div id="loginMessage" class="hidden"></div>
-        </div>
+            <div id="loginMessage" class="message hidden"></div>
+        </main>
 
         <!-- 2. Already Activated Section -->
-        <div id="alreadyActivatedSection" class="card hidden">
-            <div class="logo-container">
+        <section id="alreadyActivatedSection" class="card hidden">
+            <header class="logo-container">
                 <h1>MgLab</h1>
-                <p style="color: var(--success);">2FA ya activado</p>
+                <p class="status-active">2FA ya activado</p>
+            </header>
+            <div class="success-msg message">
+                Ya has activado el 2FA. Si necesitas restablecerlo, por favor levanta un ticket <a href="/tickets" target="_blank" rel="noopener noreferrer">aquí.</a>
+                <p>Es todo por aquí, puedes iniciar sesión en la plataforma <a href="/login">aquí.</a></p>
             </div>
-            <div class="success-msg" style="padding: 1.5rem; border-radius: 12px; text-align: center;">
-                Ya has activado el 2FA si necesitas restablecerlo por favor contacta al administrador.
-            </div>
-        </div>
+        </section>
 
         <!-- 3. Activation Section -->
-        <div id="activationSection" class="card hidden">
-            <div class="logo-container">
+        <section id="activationSection" class="card hidden">
+            <header class="logo-container">
                 <h1>Configurar 2FA</h1>
                 <p>Sigue los pasos para proteger tu cuenta</p>
-            </div>
+            </header>
             
             <div class="steps">
-                <div class="step">
+                <article class="step">
                     <div class="step-number">1</div>
                     <div class="step-text">
                         <strong>Escanea el código QR</strong>
-                        Usa Google Authenticator o Microsoft Authenticator.
+                        Usa Google Authenticator o Microsoft Authenticator en tu móvil.
                     </div>
-                </div>
+                </article>
             </div>
 
             <div class="qr-container">
@@ -65,140 +66,25 @@
             </div>
 
             <div class="steps">
-                <div class="step">
+                <article class="step">
                     <div class="step-number">2</div>
                     <div class="step-text">
-                        <strong>Ingresa el código</strong>
+                        <strong>Verifica tu dispositivo</strong>
                         Introduce el código de 6 dígitos que aparece en tu app.
                     </div>
-                </div>
+                </article>
             </div>
 
             <form id="verifyForm">
                 <div class="form-group">
-                    <input type="text" id="otpCode" placeholder="000 000" maxlength="6" pattern="\d{6}" required style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;">
+                    <input type="text" id="otpCode" placeholder="000 000" maxlength="6" pattern="\d{6}" inputmode="numeric" required>
                 </div>
                 <button type="submit" id="verifyBtn">Verificar y Activar</button>
             </form>
-            <div id="verifyMessage" class="hidden"></div>
-        </div>
+            <div id="verifyMessage" class="message hidden"></div>
+        </section>
     </div>
 
-    <script>
-        const loginSection = document.getElementById('loginSection');
-        const alreadyActivatedSection = document.getElementById('alreadyActivatedSection');
-        const activationSection = document.getElementById('activationSection');
-        
-        const loginForm = document.getElementById('loginForm');
-        const verifyForm = document.getElementById('verifyForm');
-        
-        const loginMessage = document.getElementById('loginMessage');
-        const verifyMessage = document.getElementById('verifyMessage');
-
-        let currentUsername = '';
-
-        function showMessage(el, type, text) {
-            el.className = type === 'error' ? 'error-msg' : 'success-msg';
-            el.textContent = text;
-            el.classList.remove('hidden');
-        }
-
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            currentUsername = username;
-
-            try {
-                const res = await fetch('/api/2FA', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password, code: "" }) 
-                });
-
-                if (!res.ok) {
-                    const data = await res.json();
-                    throw new Error(data.Error || 'Error al iniciar sesión');
-                }
-
-                // Login exitoso, ahora intentamos generar el secreto
-                await checkAndGenerateSecret();
-
-            } catch (err) {
-                showMessage(loginMessage, 'error', err.message);
-            }
-        });
-
-        async function checkAndGenerateSecret() {
-            try {
-                const res = await fetch('/api/generateSecret', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: currentUsername })
-                });
-
-                if (res.status === 400) {
-                    // Ya está activado
-                    loginSection.classList.add('hidden');
-                    alreadyActivatedSection.classList.remove('hidden');
-                    return;
-                }
-
-                if (!res.ok) {
-                    const data = await res.json();
-                    throw new Error(data.Error || 'Error al generar secreto');
-                }
-
-                const data = await res.json();
-                
-                // Mostrar panel de activación y generar QR
-                loginSection.classList.add('hidden');
-                activationSection.classList.remove('hidden');
-                
-                document.getElementById('qrcode').innerHTML = '';
-                new QRCode(document.getElementById("qrcode"), {
-                    text: data.url,
-                    width: 200,
-                    height: 200,
-                    colorDark : "#000000",
-                    colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.H
-                });
-
-            } catch (err) {
-                showMessage(loginMessage, 'error', err.message);
-            }
-        }
-
-        verifyForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const code = document.getElementById('otpCode').value;
-
-            try {
-                const res = await fetch('/api/config2FA', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        username: currentUsername,
-                        code: code
-                    })
-                });
-
-                const data = await res.json();
-
-                if (!res.ok) {
-                    throw new Error(data.Error || 'Error al configurar 2FA');
-                }
-
-                showMessage(verifyMessage, 'success', '¡2FA activado correctamente! Redirigiendo...');
-                setTimeout(() => {
-                    window.location.href = '/login';
-                }, 2000);
-
-            } catch (err) {
-                showMessage(verifyMessage, 'error', err.message);
-            }
-        });
-    </script>
+    <script src="/js/2FA.js"></script>
 </body>
 </html>
