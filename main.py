@@ -69,6 +69,10 @@ def read_2fa(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_
         return RedirectResponse(url="/")
     return FileResponse("templates/2FA.html")
 
+@app.get("/panel", include_in_schema=False)
+def read_panel():
+    return FileResponse("templates/panel.html")
+
 # ----------- BACKEND ----------- #
 # Endpoint Login
 @app.post(
