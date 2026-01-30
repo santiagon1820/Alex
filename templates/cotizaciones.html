@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cotización INTERLAB - Final Limitada</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="/css/cotizaciones.css">
+</head>
+<body>
+    <div class="controls">
+        <button class="btn btn-success" onclick="addNewRow()">➕ Añadir Partida</button>
+        <button class="btn btn-primary" onclick="generatePDF()">📄 Generar PDF</button>
+    </div>
+
+    <div id="pdf-container"></div>
+
+    <script src="/js/cotizaciones.js"></script>
+</body>
+</html>

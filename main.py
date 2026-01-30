@@ -12,6 +12,8 @@ import controllers.AuthController as AuthController
 import controllers.CRONController as CronController
 import controllers.TwoFAController as TwoFAController
 import controllers.VerifyTokenController as VerifyTokenController
+import controllers.CotizacionesController as CotizacionesController
+
 
 # Importamos schemas
 import schemas.Payload as schemasPayload
@@ -70,8 +72,16 @@ def read_2fa(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_
     return FileResponse("templates/2FA.html")
 
 @app.get("/panel", include_in_schema=False)
-def read_panel():
+def read_panel(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    if not is_logged_in:
+        return RedirectResponse(url="/")
     return FileResponse("templates/panel.html")
+
+@app.get("/panel/cotizaciones", include_in_schema=False)
+def read_cotizaciones(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    if not is_logged_in:
+        return RedirectResponse(url="/")
+    return FileResponse("templates/cotizaciones.html")
 
 # ----------- BACKEND ----------- #
 # Endpoint Login
@@ -177,18 +187,25 @@ def generateSecret(data: schemasPayload.GenerateSecret, token_data: dict = Depen
     return TwoFAController.generate_secret(username)
 
 # Endpoint para configurar codigo 2FA
-@app.post(
-    "/api/config2FA",
-    tags=["2FA"],
-    summary="Configurar codigo 2FA",
-    responses={
-        200: {"model": Schemas.Verify2FA200},
-        404: {"model": Schemas.Verify2FA404},
-        401: {"model": Schemas.VerifySession401},
-        500: {"model": Schemas.InternalServerError}
-    },
-    dependencies=[Depends(VerifyTokenController.verify_token_2fa)]
-)
+@app.post("/api/config2FA", tags=["2FA"])
 def config2FA(data: schemasPayload.Verify2FA, token_data: dict = Depends(VerifyTokenController.verify_token_2fa)):
     username = token_data.get("username") or data.username
     return TwoFAController.config2FA(username, data.code)
+
+# ----------- COTIZACIONES ----------- #
+@app.get("/api/cotizaciones/folio", tags=["Cotizaciones"])
+def get_folio(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    if not is_logged_in:
+        return JSONResponse(status_code=401, content={"detail": "No autorizado"})
+    return CotizacionesController.get_next_folio()
+
+from fastapi import UploadFile, File, Form
+@app.post("/api/cotizaciones/save", tags=["Cotizaciones"])
+async def save_cotizacion(
+    folio: int = Form(...), 
+    file: UploadFile = File(...),
+    is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)
+):
+    if not is_logged_in:
+        return JSONResponse(status_code=401, content={"detail": "No autorizado"})
+    return await CotizacionesController.save_cotizacion(folio, file)

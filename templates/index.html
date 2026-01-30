@@ -5,7 +5,10 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>MGLAB Landing Page - Neural Network Edition</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/css/chat.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
@@ -15,58 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
       rel="stylesheet"
     />
-    <style type="text/tailwindcss">
-      :root {
-        --primary-blue: #197fe6;
-        --accent-green: #2ecc71;
-        --accent-red: #e74c3c;
-        --bg-dark: #0a0f16;
-        --card-glass: rgba(10, 15, 22, 0.85);
-        --border-glow: rgba(25, 127, 230, 0.3);
-      }
-      @layer base {
-        body {
-          font-family: "Space Grotesk", sans-serif;
-          background-color: var(--bg-dark);
-          overflow-x: hidden;
-        }
-      }
-      @layer components {
-        .neural-container {
-          position: fixed;
-          inset: 0;
-          z-index: 0;
-          background: radial-gradient(
-            circle at center,
-            #0a1118 0%,
-            #05080c 100%
-          );
-        }
-        #neural-canvas {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-        }
-        .glow-text {
-          text-shadow:
-            0 0 15px rgba(25, 127, 230, 0.6),
-            0 0 30px rgba(25, 127, 230, 0.3);
-        }
-        .glass-card {
-          background: var(--card-glass);
-          backdrop-filter: blur(16px);
-          border: 1px solid var(--border-glow);
-          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-        }
-        .accent-glow-green {
-          box-shadow: 0 0 20px rgba(46, 204, 113, 0.15);
-        }
-        .accent-glow-red {
-          box-shadow: 0 0 20px rgba(231, 76, 60, 0.15);
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="/css/index.css" />
     <script id="tailwind-config">
       tailwind.config = {
         darkMode: "class",
@@ -91,53 +43,6 @@
       ></div>
     </div>
     <div class="relative z-10 flex flex-col min-h-screen">
-      <header
-        class="flex items-center justify-between border-b border-primary/20 px-6 py-4 lg:px-20 bg-bg-dark/60 backdrop-blur-xl"
-      >
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 text-primary">
-            <svg
-              fill="none"
-              viewBox="0 0 48 48"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                clip-rule="evenodd"
-                d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z"
-                fill="currentColor"
-                fill-rule="evenodd"
-              ></path>
-            </svg>
-          </div>
-          <h2 class="text-xl font-bold tracking-widest glow-text uppercase">
-            MGLAB
-          </h2>
-        </div>
-        <nav class="hidden md:flex items-center gap-10">
-          <a
-            class="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors text-white/70"
-            href="#"
-            >Infraestructura</a
-          >
-          <a
-            class="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors text-white/70"
-            href="#"
-            >Seguridad</a
-          >
-          <a
-            class="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors text-white/70"
-            href="#"
-            >Status</a
-          >
-        </nav>
-        <div class="flex items-center gap-4">
-          <button
-            class="bg-primary/10 border border-primary/40 hover:bg-primary/30 text-primary px-4 py-1.5 rounded text-xs font-black tracking-widest transition-all uppercase"
-          >
-            V2.4.0-CORE
-          </button>
-        </div>
-      </header>
       <main
         class="flex-grow flex flex-col items-center justify-center px-6 py-12"
       >
@@ -160,7 +65,8 @@
           </p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
-          <button
+          <a
+            href="/login"
             class="glass-card group relative flex flex-col items-center justify-center gap-4 p-10 rounded-lg transition-all hover:scale-[1.02] hover:border-accent-green/60 accent-glow-green overflow-hidden"
           >
             <div
@@ -176,8 +82,9 @@
             <div
               class="w-16 h-0.5 bg-accent-green/50 group-hover:w-full transition-all duration-500"
             ></div>
-          </button>
-          <button
+          </a>
+          <a
+            href="/2FA"
             class="glass-card group relative flex flex-col items-center justify-center gap-4 p-10 rounded-lg transition-all hover:scale-[1.02] hover:border-accent-green/60 accent-glow-green overflow-hidden"
           >
             <div
@@ -188,13 +95,14 @@
               >verified_user</span
             >
             <span class="text-lg font-black tracking-[0.2em] uppercase"
-              >2FA Access</span
+              >2FA</span
             >
             <div
               class="w-16 h-0.5 bg-accent-green/50 group-hover:w-full transition-all duration-500"
             ></div>
-          </button>
-          <button
+          </a>
+          <a
+            href="#"
             class="glass-card group relative flex flex-col items-center justify-center gap-4 p-10 rounded-lg transition-all hover:scale-[1.02] hover:border-accent-red/60 accent-glow-red overflow-hidden"
           >
             <div
@@ -210,8 +118,9 @@
             <div
               class="w-16 h-0.5 bg-accent-red/50 group-hover:w-full transition-all duration-500"
             ></div>
-          </button>
-          <button
+          </a>
+          <a
+            href="#"
             class="glass-card group relative flex flex-col items-center justify-center gap-4 p-10 rounded-lg transition-all hover:scale-[1.02] hover:border-accent-red/60 accent-glow-red overflow-hidden"
           >
             <div
@@ -227,59 +136,7 @@
             <div
               class="w-16 h-0.5 bg-accent-red/50 group-hover:w-full transition-all duration-500"
             ></div>
-          </button>
-        </div>
-        <div
-          class="mt-16 w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-6 px-4"
-        >
-          <div class="glass-card p-6 border-l-4 border-l-primary/60">
-            <div class="flex justify-between items-start mb-2">
-              <span
-                class="text-[10px] font-black text-primary uppercase tracking-[0.3em]"
-                >Neural Link</span
-              >
-              <span class="material-symbols-outlined text-primary text-sm"
-                >hub</span
-              >
-            </div>
-            <p
-              class="text-xs text-white/50 leading-relaxed font-medium uppercase"
-            >
-              Active Synaptic Encryption Protocol V4
-            </p>
-          </div>
-          <div class="glass-card p-6 border-l-4 border-l-accent-green/60">
-            <div class="flex justify-between items-start mb-2">
-              <span
-                class="text-[10px] font-black text-accent-green uppercase tracking-[0.3em]"
-                >System Status</span
-              >
-              <span class="material-symbols-outlined text-accent-green text-sm"
-                >sensors</span
-              >
-            </div>
-            <p
-              class="text-xs text-white/50 leading-relaxed font-medium uppercase"
-            >
-              All Nodes Operational - Latency: 0.04ms
-            </p>
-          </div>
-          <div class="glass-card p-6 border-l-4 border-l-accent-red/60">
-            <div class="flex justify-between items-start mb-2">
-              <span
-                class="text-[10px] font-black text-accent-red uppercase tracking-[0.3em]"
-                >Threat Map</span
-              >
-              <span class="material-symbols-outlined text-accent-red text-sm"
-                >security</span
-              >
-            </div>
-            <p
-              class="text-xs text-white/50 leading-relaxed font-medium uppercase"
-            >
-              Active Perimeter Monitoring: Active
-            </p>
-          </div>
+          </a>
         </div>
       </main>
       <footer
@@ -292,153 +149,13 @@
             <p
               class="text-[10px] text-white/40 font-bold uppercase tracking-widest"
             >
-              © 2024 MGLAB RESEARCH UNIT // CODENAME: NEURAL-NET
+              ©MGLAB
             </p>
-            <div class="flex items-center gap-2">
-              <span
-                class="w-2 h-2 rounded-full bg-accent-green animate-pulse shadow-[0_0_8px_#2ecc71]"
-              ></span>
-              <span
-                class="text-[10px] text-accent-green font-black tracking-widest uppercase"
-                >Network Live</span
-              >
-            </div>
-          </div>
-          <div
-            class="flex gap-8 text-[10px] font-black text-white/40 uppercase tracking-[0.25em]"
-          >
-            <a
-              class="hover:text-primary transition-colors cursor-pointer"
-              href="#"
-              >Terms</a
-            >
-            <a
-              class="hover:text-primary transition-colors cursor-pointer"
-              href="#"
-              >Privacy</a
-            >
-            <a
-              class="hover:text-primary transition-colors cursor-pointer"
-              href="#"
-              >Node Docs</a
-            >
           </div>
         </div>
       </footer>
     </div>
-    <script>
-      const canvas = document.getElementById("neural-canvas");
-      const ctx = canvas.getContext("2d");
-      let particles = [];
-      let animationId;
-      const mouse = { x: null, y: null, radius: 180 };
-
-      window.addEventListener("mousemove", (e) => {
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
-      });
-
-      window.addEventListener("mouseleave", () => {
-        mouse.x = null;
-        mouse.y = null;
-      });
-
-      class Particle {
-        constructor() {
-          this.init();
-        }
-        init() {
-          this.x = Math.random() * canvas.width;
-          this.y = Math.random() * canvas.height;
-          this.size = Math.random() * 1.5 + 0.5;
-          this.speedX = (Math.random() - 0.5) * 0.5;
-          this.speedY = (Math.random() - 0.5) * 0.5;
-          this.baseX = this.x;
-          this.baseY = this.y;
-          this.density = Math.random() * 30 + 1;
-        }
-        update() {
-          // Movement
-          this.x += this.speedX;
-          this.y += this.speedY;
-
-          // Boundary check
-          if (this.x > canvas.width || this.x < 0) this.speedX *= -1;
-          if (this.y > canvas.height || this.y < 0) this.speedY *= -1;
-
-          // Mouse interaction
-          if (mouse.x != null) {
-            let dx = mouse.x - this.x;
-            let dy = mouse.y - this.y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < mouse.radius) {
-              const force = (mouse.radius - distance) / mouse.radius;
-              const directionX = dx / distance;
-              const directionY = dy / distance;
-              // Multiplicador aumentado a 8 para una respuesta casi instantánea
-              this.x += directionX * force * 8;
-              this.y += directionY * force * 8;
-            }
-          }
-        }
-        draw() {
-          ctx.fillStyle = "rgba(25, 127, 230, 0.8)";
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
-      function init() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        particles = [];
-        const numberOfParticles = Math.floor(
-          (canvas.width * canvas.height) / 9000,
-        );
-        for (let i = 0; i < numberOfParticles; i++) {
-          particles.push(new Particle());
-        }
-      }
-
-      function connect() {
-        let opacityValue = 1;
-        for (let a = 0; a < particles.length; a++) {
-          for (let b = a; b < particles.length; b++) {
-            let dx = particles[a].x - particles[b].x;
-            let dy = particles[a].y - particles[b].y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < 150) {
-              opacityValue = 1 - distance / 150;
-              ctx.strokeStyle = `rgba(25, 127, 230, ${opacityValue * 0.4})`;
-              ctx.lineWidth = 1;
-              ctx.beginPath();
-              ctx.moveTo(particles[a].x, particles[a].y);
-              ctx.lineTo(particles[b].x, particles[b].y);
-              ctx.stroke();
-            }
-          }
-        }
-      }
-
-      function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (let i = 0; i < particles.length; i++) {
-          particles[i].update();
-          particles[i].draw();
-        }
-        connect();
-        animationId = requestAnimationFrame(animate);
-      }
-
-      window.addEventListener("resize", () => {
-        init();
-      });
-
-      init();
-      animate();
-    </script>
+    <script src="/js/index.js" defer></script>
     <script type="module" src="/js/chat.js"></script>
   </body>
 </html>

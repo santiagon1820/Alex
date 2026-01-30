@@ -1,231 +1,446 @@
-<!DOCTYPE html>
-<html class="light" lang="es"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Dashboard de Gestión MG - Manuales y Color</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#135bec", // Blue
-                        "success": "#10b981", // Green
-                        "danger": "#ef4444",  // Red
-                        "background-light": "#f6f6f8",
-                        "background-dark": "#101622",
-                    },
-                    fontFamily: {
-                        "display": ["Inter"]
-                    },
-                    borderRadius: {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
-                    },
-                },
+<!doctype html>
+<html class="light" lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Dashboard de Gestión MG - Manuales y Color</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#135bec", // Blue
+              success: "#10b981", // Green
+              danger: "#ef4444", // Red
+              "background-light": "#f6f6f8",
+              "background-dark": "#101622",
             },
-        }
+            fontFamily: {
+              display: ["Inter"],
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
     </script>
-<style type="text/tailwindcss">
-        body {
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            min-height: max(884px, 100dvh);
-        }
-        .sidebar-active {
-            @apply bg-primary/10 text-primary font-semibold;
-        }
+    <style type="text/tailwindcss">
+      body {
+        font-family: "Inter", sans-serif;
+        -webkit-tap-highlight-color: transparent;
+        min-height: max(884px, 100dvh);
+      }
+      .sidebar-active {
+        @apply bg-primary/10 text-primary font-semibold;
+      }
     </style>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
-    }
-  </style>
+    <style>
+      body {
+        min-height: max(884px, 100dvh);
+      }
+    </style>
   </head>
-<body class="bg-background-light dark:bg-background-dark text-[#0d121b] dark:text-white antialiased">
-<div class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#1a2130] shadow-xl border-r border-gray-200 dark:border-gray-800 transition-transform transform translate-x-0">
-<div class="flex flex-col h-full p-4">
-<div class="flex items-center gap-3 px-4 py-6 border-b border-gray-100 dark:border-gray-800 mb-4">
-<div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-lg">MG</div>
-<div>
-<p class="text-sm font-bold text-primary">Gestión MG</p>
-<p class="text-[10px] text-gray-500 uppercase tracking-tighter">Enterprise Panel</p>
-</div>
-</div>
-<nav class="flex-1 space-y-1 overflow-y-auto pr-2 custom-scrollbar">
-<a class="flex items-center gap-3 px-4 py-3 rounded-lg sidebar-active" href="#">
-<span class="material-symbols-outlined text-[20px]">analytics</span>
-<span class="text-sm truncate">Seguimiento</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" href="#">
-<span class="material-symbols-outlined text-[20px] text-gray-500">request_quote</span>
-<span class="text-sm font-medium">Cotizaciones</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" href="#">
-<span class="material-symbols-outlined text-[20px] text-gray-500">shopping_cart</span>
-<span class="text-sm font-medium">Ordenes de compra</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" href="#">
-<span class="material-symbols-outlined text-[20px] text-gray-500">track_changes</span>
-<span class="text-sm font-medium">Seguimiento OC</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" href="#">
-<span class="material-symbols-outlined text-[20px] text-gray-500">description</span>
-<span class="text-sm font-medium">Licitaciones</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" href="#">
-<span class="material-symbols-outlined text-[20px] text-gray-500">verified_user</span>
-<span class="text-sm font-medium">Garantias</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" href="#">
-<span class="material-symbols-outlined text-[20px] text-gray-500">inventory_2</span>
-<span class="text-sm font-medium">Plantillas productos</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" href="#">
-<span class="material-symbols-outlined text-[20px] text-gray-500">menu_book</span>
-<span class="text-sm font-medium">Manuales</span>
-</a>
-</nav>
-<div class="mt-auto pt-4 border-t border-gray-100 dark:border-gray-800">
-<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-danger" href="#">
-<span class="material-symbols-outlined text-[20px]">logout</span>
-<span class="text-sm font-medium">Cerrar Sesión</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mt-1" href="#">
-<span class="material-symbols-outlined text-[20px] text-gray-500">settings</span>
-<span class="text-sm font-medium">Configuraciones</span>
-</a>
-</div>
-</div>
-</div>
-<main class="ml-64 min-h-screen flex flex-col">
-<header class="sticky top-0 z-40 flex items-center justify-between bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-4 border-b border-gray-200 dark:border-gray-800">
-<div class="flex items-center gap-4">
-<button class="material-symbols-outlined text-gray-500 lg:hidden">menu</button>
-<h1 class="text-lg font-bold tracking-tight">Panel Principal</h1>
-</div>
-<div class="flex items-center gap-5">
-<div class="flex items-center gap-1 border-r border-gray-200 pr-4">
-<button class="p-2 text-gray-500 hover:bg-gray-100 rounded-full flex items-center gap-1.5 transition-colors" title="Manuales">
-<span class="material-symbols-outlined text-[22px]">menu_book</span>
-<span class="text-xs font-semibold hidden md:inline">Manuales</span>
-</button>
-<button class="p-2 text-danger hover:bg-red-50 rounded-full relative transition-colors" title="Alertas">
-<span class="material-symbols-outlined text-[22px]">notifications</span>
-<span class="absolute top-2 right-2.5 size-2 bg-danger rounded-full border-2 border-white"></span>
-</button>
-</div>
-<div class="flex items-center gap-3">
-<div class="text-right hidden sm:block">
-<p class="text-sm font-bold text-[#0d121b] dark:text-white leading-tight">Usuario Demo</p>
-<p class="text-[10px] uppercase tracking-wider text-success font-bold">Administrador</p>
-</div>
-<div class="size-10 rounded-full bg-primary flex items-center justify-center shadow-sm">
-<span class="text-white font-bold text-sm">MG</span>
-</div>
-</div>
-</div>
-</header>
-<div class="flex-1 p-6">
-<div class="mb-6">
-<h3 class="text-[#0d121b] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">Nuestras Marcas</h3>
-<p class="text-sm text-gray-500 mt-1">Selecciona una marca para gestionar inventario y pedidos.</p>
-</div>
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-<div class="group flex flex-col bg-white dark:bg-[#1a2130] rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all cursor-pointer">
-<div class="w-full bg-gray-50 dark:bg-gray-900 aspect-video flex items-center justify-center p-8 bg-center bg-no-repeat bg-cover" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDaHZt53AViCbCy9ewqr6vyl0kHACPSEZ-20npVLP2eMuE4G4_4B9wN5drw2G_emas3HQkr8ncZWnmvDn0e82qY95sx2bvnEV2IXbUIK7QRte5aLR2qfceXSoarfUwxl7bk4QW-a7v-o6FLRvWT3Jd13XFHoOYh1IyDZPflLUFVBq_Hcac0o10XDWxPYeNFBULEAqBoAxL1pttb5TWPDGtKqdYXOFLNjRTVtC4mm_gxe6bx9N3RU36D8vsh9zqhbRlXBbCQ54TbPNg");'>
-</div>
-<div class="p-4 flex items-center justify-between border-t border-gray-50 dark:border-gray-800">
-<p class="text-[#0d121b] dark:text-white text-base font-semibold">Lenovo</p>
-<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors">arrow_forward_ios</span>
-</div>
-</div>
-<div class="group flex flex-col bg-white dark:bg-[#1a2130] rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all cursor-pointer">
-<div class="w-full bg-gray-50 dark:bg-gray-900 aspect-video flex items-center justify-center p-8 bg-center bg-no-repeat bg-cover" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCuid54TFy1QmNaQyi36wJCx8c1-Sa23vYmAXDZiXoP5GoJr_S1CSrd3moJ4JhZHci6504b_3awop6reZx2lZgA-nQwSGPWQDICEhlez7wQPjko7dui2CUu79qrkVHpTRHc0E-mNxObkU891pFnYyPjKgAWHOm_M0hlUVk7VLR7zcuOKkzMcdazK9RXjt7IGui-ybQ5YsvvXxy2i1TkPhb-DwamDOgj_ZGcvhOJk9G6rVLFLyOYjrTNeA2OpLxUU0WwRgAQcsBvvak");'>
-</div>
-<div class="p-4 flex items-center justify-between border-t border-gray-50 dark:border-gray-800">
-<p class="text-[#0d121b] dark:text-white text-base font-semibold">Cyberpower</p>
-<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors">arrow_forward_ios</span>
-</div>
-</div>
-<div class="group flex flex-col bg-white dark:bg-[#1a2130] rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all cursor-pointer">
-<div class="w-full bg-gray-50 dark:bg-gray-900 aspect-video flex items-center justify-center p-8 bg-center bg-no-repeat bg-cover" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBOiBmUnLUpT9veLXRWB3SwHEnCrV-TzY7VbYQPlavmlvAe6gcZ46ohJ138srZKlwrnyhNjHh8vwP4u6G56diSklEmWlm9ERMcDeDGGOn1IqRCTiOT_fZ814G1Q9mdPQnTAKZrnLcTvI5iqLzp_z2q315t74vYzlRTIpjxrUfxwUpXzc3N_IzUeS_wU6GxFNq998s44Yy6Cd_qDfUEmUbLVA23__KmI1LaGeC-1yFAQ5sHy3QLZrwTeKEELl5Mu-MyzJBq3LH5bm7Q");'>
-</div>
-<div class="p-4 flex items-center justify-between border-t border-gray-50 dark:border-gray-800">
-<p class="text-[#0d121b] dark:text-white text-base font-semibold">Nutanix</p>
-<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors">arrow_forward_ios</span>
-</div>
-</div>
-<div class="group flex flex-col bg-white dark:bg-[#1a2130] rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all cursor-pointer">
-<div class="w-full bg-gray-50 dark:bg-gray-900 aspect-video flex items-center justify-center p-8 bg-center bg-no-repeat bg-cover" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAdfJ8ekc8NhAYchTf2bI6EsjxpD1Sx-kQhZPiIfX6x9znl2RjDSma1uQJfGPFMHpBdO_b4_bmEQ1zycbFdNck-2LGlqajeyQMllx-aYfn65HsBirpTZDpO04IJx1SQWrv-CDAKokwk2nTI6q9UYIE8xPQMSg56hMLsZ2bXwNz35AkIft-Eb9RHRncahQFmgyRvAA77WDN8yLsRA7hoggnKKfhMq2IbSgXOhsuwhNjqzdJYFEmaCVSZovH0PlEclBp4_30NpmRXSzM");'>
-</div>
-<div class="p-4 flex items-center justify-between border-t border-gray-50 dark:border-gray-800">
-<p class="text-[#0d121b] dark:text-white text-base font-semibold">Lexmark</p>
-<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors">arrow_forward_ios</span>
-</div>
-</div>
-<div class="group flex flex-col bg-white dark:bg-[#1a2130] rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all cursor-pointer">
-<div class="w-full bg-gray-50 dark:bg-gray-900 aspect-video flex items-center justify-center p-8 bg-center bg-no-repeat bg-cover" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBbzo9Tlivh5VYfEfqODrdqGlrVK8utwN7JLSPhj9SvSmazC_kLubp-2YBWRBKbxK5j7lzGJC5J9YKH8KX5tUKRlqFnSnafYNTG7q9RKsUMxJKueJO96clQhNvwmvb_oR-DFQFT59GdicbFJuOoZY8PSBlwn8-Z0oW92lWsn_K33oOry9OiLi1mmR5IDe9RUPnpVJn_m-XpF6CW5-vLTVrSspvej42KMBvPe-qyLaE4zQKspEeMrxgurofImi5tolvGx_M0evNdQS4");'>
-</div>
-<div class="p-4 flex items-center justify-between border-t border-gray-50 dark:border-gray-800">
-<p class="text-[#0d121b] dark:text-white text-base font-semibold">Benq</p>
-<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors">arrow_forward_ios</span>
-</div>
-</div>
-<div class="group flex flex-col bg-white dark:bg-[#1a2130] rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all cursor-pointer">
-<div class="w-full bg-gray-50 dark:bg-gray-900 aspect-video flex items-center justify-center p-8 bg-center bg-no-repeat bg-cover" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDc5twFY-jEacyezcs4cEoAGejcMjnRoHPo4IRt2JwpHi6NwN7OhYTXnhk76d8hptwQZ9nQAdTDQwx1HGWGbkZmFy5fz1ImAXTnAbEKuASdPYN0J3pKv2eOLhLTTiOQFzfJAQQbZuZmeup369hvIKcK7q2ECa0Lo3dKC2Td1T6W057H5b8bPkgm2u7ew4dSbHYK-2sT02Dj9-oYh280CSw4gezeSz713Kry4dGETFqrjxyJcRoM8f3A15y-2FMsm-iVK4Eix3rPmw4");'>
-</div>
-<div class="p-4 flex items-center justify-between border-t border-gray-50 dark:border-gray-800">
-<p class="text-[#0d121b] dark:text-white text-base font-semibold">Eset</p>
-<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors">arrow_forward_ios</span>
-</div>
-</div>
-</div>
-<div class="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-<div class="p-5 bg-white dark:bg-[#1a2130] rounded-xl border-l-4 border-primary shadow-sm">
-<p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Pedidos Activos</p>
-<div class="flex items-end justify-between">
-<p class="text-2xl font-bold text-primary">24</p>
-<span class="material-symbols-outlined text-primary/30">local_shipping</span>
-</div>
-</div>
-<div class="p-5 bg-white dark:bg-[#1a2130] rounded-xl border-l-4 border-success shadow-sm">
-<p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Cotizaciones Pendientes</p>
-<div class="flex items-end justify-between">
-<p class="text-2xl font-bold text-success">12</p>
-<span class="material-symbols-outlined text-success/30">list_alt</span>
-</div>
-</div>
-<div class="p-5 bg-white dark:bg-[#1a2130] rounded-xl border-l-4 border-danger shadow-sm">
-<p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Alertas Urgentes</p>
-<div class="flex items-end justify-between">
-<p class="text-2xl font-bold text-danger">3</p>
-<span class="material-symbols-outlined text-danger/30">warning</span>
-</div>
-</div>
-<div class="p-5 bg-white dark:bg-[#1a2130] rounded-xl border-l-4 border-primary shadow-sm">
-<p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Stock General</p>
-<div class="flex items-end justify-between">
-<p class="text-2xl font-bold text-primary">1,402</p>
-<span class="material-symbols-outlined text-primary/30">inventory_2</span>
-</div>
-</div>
-</div>
-</div>
-<div class="fixed bottom-6 right-6 z-50">
-<button class="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-xl hover:scale-105 active:scale-95 transition-transform">
-<span class="material-symbols-outlined text-[28px]">chat</span>
-<span class="absolute -top-1 -right-1 flex h-4 w-4">
-<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-danger opacity-75"></span>
-<span class="relative inline-flex rounded-full h-4 w-4 bg-danger border-2 border-white"></span>
-</span>
-</button>
-</div>
-</main>
-
-</body></html>
+  <body
+    class="bg-background-light dark:bg-background-dark text-[#0d121b] dark:text-white antialiased"
+  >
+    <div
+      class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#1a2130] shadow-xl border-r border-gray-200 dark:border-gray-800 transition-transform transform translate-x-0"
+    >
+      <div class="flex flex-col h-full p-4">
+        <div
+          class="flex items-center gap-3 px-4 py-6 border-b border-gray-100 dark:border-gray-800 mb-4"
+        >
+          <div
+            class="size-10 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-lg"
+          >
+            MG
+          </div>
+          <div>
+            <p class="text-sm font-bold text-primary">Gestión MG</p>
+            <p class="text-[10px] text-gray-500 uppercase tracking-tighter">
+              Enterprise Panel
+            </p>
+          </div>
+        </div>
+        <nav class="flex-1 space-y-1 overflow-y-auto pr-2 custom-scrollbar">
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg sidebar-active"
+            href="#"
+          >
+            <span class="material-symbols-outlined text-[20px]">analytics</span>
+            <span class="text-sm truncate">Seguimiento</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            href="/panel/cotizaciones"
+          >
+            <span class="material-symbols-outlined text-[20px] text-gray-500"
+              >request_quote</span
+            >
+            <span class="text-sm font-medium">Cotizaciones</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            href="#"
+          >
+            <span class="material-symbols-outlined text-[20px] text-gray-500"
+              >shopping_cart</span
+            >
+            <span class="text-sm font-medium">Ordenes de compra</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            href="#"
+          >
+            <span class="material-symbols-outlined text-[20px] text-gray-500"
+              >track_changes</span
+            >
+            <span class="text-sm font-medium">Seguimiento OC</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            href="#"
+          >
+            <span class="material-symbols-outlined text-[20px] text-gray-500"
+              >description</span
+            >
+            <span class="text-sm font-medium">Licitaciones</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            href="#"
+          >
+            <span class="material-symbols-outlined text-[20px] text-gray-500"
+              >verified_user</span
+            >
+            <span class="text-sm font-medium">Garantias</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            href="#"
+          >
+            <span class="material-symbols-outlined text-[20px] text-gray-500"
+              >inventory_2</span
+            >
+            <span class="text-sm font-medium">Plantillas productos</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            href="#"
+          >
+            <span class="material-symbols-outlined text-[20px] text-gray-500"
+              >menu_book</span
+            >
+            <span class="text-sm font-medium">Manuales</span>
+          </a>
+        </nav>
+        <div class="mt-auto pt-4 border-t border-gray-100 dark:border-gray-800">
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-danger"
+            href="#"
+          >
+            <span class="material-symbols-outlined text-[20px]">logout</span>
+            <span class="text-sm font-medium">Cerrar Sesión</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mt-1"
+            href="#"
+          >
+            <span class="material-symbols-outlined text-[20px] text-gray-500"
+              >settings</span
+            >
+            <span class="text-sm font-medium">Configuraciones</span>
+          </a>
+        </div>
+      </div>
+    </div>
+    <main class="ml-64 min-h-screen flex flex-col">
+      <header
+        class="sticky top-0 z-40 flex items-center justify-between bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-4 border-b border-gray-200 dark:border-gray-800"
+      >
+        <div class="flex items-center gap-4">
+          <button class="material-symbols-outlined text-gray-500 lg:hidden">
+            menu
+          </button>
+          <h1 class="text-lg font-bold tracking-tight">Panel Principal</h1>
+        </div>
+        <div class="flex items-center gap-5">
+          <div class="flex items-center gap-1 border-r border-gray-200 pr-4">
+            <button
+              class="p-2 text-gray-500 hover:bg-gray-100 rounded-full flex items-center gap-1.5 transition-colors"
+              title="Manuales"
+            >
+              <span class="material-symbols-outlined text-[22px]"
+                >menu_book</span
+              >
+              <span class="text-xs font-semibold hidden md:inline"
+                >Manuales</span
+              >
+            </button>
+            <button
+              class="p-2 text-danger hover:bg-red-50 rounded-full relative transition-colors"
+              title="Alertas"
+            >
+              <span class="material-symbols-outlined text-[22px]"
+                >notifications</span
+              >
+              <span
+                class="absolute top-2 right-2.5 size-2 bg-danger rounded-full border-2 border-white"
+              ></span>
+            </button>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="text-right hidden sm:block">
+              <p
+                class="text-sm font-bold text-[#0d121b] dark:text-white leading-tight"
+              >
+                Usuario Demo
+              </p>
+              <p
+                class="text-[10px] uppercase tracking-wider text-success font-bold"
+              >
+                Administrador
+              </p>
+            </div>
+            <div
+              class="size-10 rounded-full bg-primary flex items-center justify-center shadow-sm"
+            >
+              <span class="text-white font-bold text-sm">MG</span>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="flex-1 p-6">
+        <div class="mb-6">
+          <h3
+            class="text-[#0d121b] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]"
+          >
+            Nuestras Marcas
+          </h3>
+          <p class="text-sm text-gray-500 mt-1">
+            Selecciona una marca para gestionar inventario y pedidos.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
+            class="group flex flex-col bg-white dark:bg-[#1a2130] rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all cursor-pointer"
+          >
+            <div
+              class="w-full bg-gray-50 dark:bg-gray-900 aspect-video flex items-center justify-center p-8 bg-center bg-no-repeat bg-cover"
+              style="
+                background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuDaHZt53AViCbCy9ewqr6vyl0kHACPSEZ-20npVLP2eMuE4G4_4B9wN5drw2G_emas3HQkr8ncZWnmvDn0e82qY95sx2bvnEV2IXbUIK7QRte5aLR2qfceXSoarfUwxl7bk4QW-a7v-o6FLRvWT3Jd13XFHoOYh1IyDZPflLUFVBq_Hcac0o10XDWxPYeNFBULEAqBoAxL1pttb5TWPDGtKqdYXOFLNjRTVtC4mm_gxe6bx9N3RU36D8vsh9zqhbRlXBbCQ54TbPNg&quot;);
+              "
+            ></div>
+            <div
+              class="p-4 flex items-center justify-between border-t border-gray-50 dark:border-gray-800"
+            >
+              <p class="text-[#0d121b] dark:text-white text-base font-semibold">
+                Lenovo
+              </p>
+              <span
+                class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors"
+                >arrow_forward_ios</span
+              >
+            </div>
+          </div>
+          <div
+            class="group flex flex-col bg-white dark:bg-[#1a2130] rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all cursor-pointer"
+          >
+            <div
+              class="w-full bg-gray-50 dark:bg-gray-900 aspect-video flex items-center justify-center p-8 bg-center bg-no-repeat bg-cover"
+              style="
+                background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuCuid54TFy1QmNaQyi36wJCx8c1-Sa23vYmAXDZiXoP5GoJr_S1CSrd3moJ4JhZHci6504b_3awop6reZx2lZgA-nQwSGPWQDICEhlez7wQPjko7dui2CUu79qrkVHpTRHc0E-mNxObkU891pFnYyPjKgAWHOm_M0hlUVk7VLR7zcuOKkzMcdazK9RXjt7IGui-ybQ5YsvvXxy2i1TkPhb-DwamDOgj_ZGcvhOJk9G6rVLFLyOYjrTNeA2OpLxUU0WwRgAQcsBvvak&quot;);
+              "
+            ></div>
+            <div
+              class="p-4 flex items-center justify-between border-t border-gray-50 dark:border-gray-800"
+            >
+              <p class="text-[#0d121b] dark:text-white text-base font-semibold">
+                Cyberpower
+              </p>
+              <span
+                class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors"
+                >arrow_forward_ios</span
+              >
+            </div>
+          </div>
+          <div
+            class="group flex flex-col bg-white dark:bg-[#1a2130] rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all cursor-pointer"
+          >
+            <div
+              class="w-full bg-gray-50 dark:bg-gray-900 aspect-video flex items-center justify-center p-8 bg-center bg-no-repeat bg-cover"
+              style="
+                background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuBOiBmUnLUpT9veLXRWB3SwHEnCrV-TzY7VbYQPlavmlvAe6gcZ46ohJ138srZKlwrnyhNjHh8vwP4u6G56diSklEmWlm9ERMcDeDGGOn1IqRCTiOT_fZ814G1Q9mdPQnTAKZrnLcTvI5iqLzp_z2q315t74vYzlRTIpjxrUfxwUpXzc3N_IzUeS_wU6GxFNq998s44Yy6Cd_qDfUEmUbLVA23__KmI1LaGeC-1yFAQ5sHy3QLZrwTeKEELl5Mu-MyzJBq3LH5bm7Q&quot;);
+              "
+            ></div>
+            <div
+              class="p-4 flex items-center justify-between border-t border-gray-50 dark:border-gray-800"
+            >
+              <p class="text-[#0d121b] dark:text-white text-base font-semibold">
+                Nutanix
+              </p>
+              <span
+                class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors"
+                >arrow_forward_ios</span
+              >
+            </div>
+          </div>
+          <div
+            class="group flex flex-col bg-white dark:bg-[#1a2130] rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all cursor-pointer"
+          >
+            <div
+              class="w-full bg-gray-50 dark:bg-gray-900 aspect-video flex items-center justify-center p-8 bg-center bg-no-repeat bg-cover"
+              style="
+                background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuAdfJ8ekc8NhAYchTf2bI6EsjxpD1Sx-kQhZPiIfX6x9znl2RjDSma1uQJfGPFMHpBdO_b4_bmEQ1zycbFdNck-2LGlqajeyQMllx-aYfn65HsBirpTZDpO04IJx1SQWrv-CDAKokwk2nTI6q9UYIE8xPQMSg56hMLsZ2bXwNz35AkIft-Eb9RHRncahQFmgyRvAA77WDN8yLsRA7hoggnKKfhMq2IbSgXOhsuwhNjqzdJYFEmaCVSZovH0PlEclBp4_30NpmRXSzM&quot;);
+              "
+            ></div>
+            <div
+              class="p-4 flex items-center justify-between border-t border-gray-50 dark:border-gray-800"
+            >
+              <p class="text-[#0d121b] dark:text-white text-base font-semibold">
+                Lexmark
+              </p>
+              <span
+                class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors"
+                >arrow_forward_ios</span
+              >
+            </div>
+          </div>
+          <div
+            class="group flex flex-col bg-white dark:bg-[#1a2130] rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all cursor-pointer"
+          >
+            <div
+              class="w-full bg-gray-50 dark:bg-gray-900 aspect-video flex items-center justify-center p-8 bg-center bg-no-repeat bg-cover"
+              style="
+                background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuBbzo9Tlivh5VYfEfqODrdqGlrVK8utwN7JLSPhj9SvSmazC_kLubp-2YBWRBKbxK5j7lzGJC5J9YKH8KX5tUKRlqFnSnafYNTG7q9RKsUMxJKueJO96clQhNvwmvb_oR-DFQFT59GdicbFJuOoZY8PSBlwn8-Z0oW92lWsn_K33oOry9OiLi1mmR5IDe9RUPnpVJn_m-XpF6CW5-vLTVrSspvej42KMBvPe-qyLaE4zQKspEeMrxgurofImi5tolvGx_M0evNdQS4&quot;);
+              "
+            ></div>
+            <div
+              class="p-4 flex items-center justify-between border-t border-gray-50 dark:border-gray-800"
+            >
+              <p class="text-[#0d121b] dark:text-white text-base font-semibold">
+                Benq
+              </p>
+              <span
+                class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors"
+                >arrow_forward_ios</span
+              >
+            </div>
+          </div>
+          <div
+            class="group flex flex-col bg-white dark:bg-[#1a2130] rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all cursor-pointer"
+          >
+            <div
+              class="w-full bg-gray-50 dark:bg-gray-900 aspect-video flex items-center justify-center p-8 bg-center bg-no-repeat bg-cover"
+              style="
+                background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuDc5twFY-jEacyezcs4cEoAGejcMjnRoHPo4IRt2JwpHi6NwN7OhYTXnhk76d8hptwQZ9nQAdTDQwx1HGWGbkZmFy5fz1ImAXTnAbEKuASdPYN0J3pKv2eOLhLTTiOQFzfJAQQbZuZmeup369hvIKcK7q2ECa0Lo3dKC2Td1T6W057H5b8bPkgm2u7ew4dSbHYK-2sT02Dj9-oYh280CSw4gezeSz713Kry4dGETFqrjxyJcRoM8f3A15y-2FMsm-iVK4Eix3rPmw4&quot;);
+              "
+            ></div>
+            <div
+              class="p-4 flex items-center justify-between border-t border-gray-50 dark:border-gray-800"
+            >
+              <p class="text-[#0d121b] dark:text-white text-base font-semibold">
+                Eset
+              </p>
+              <span
+                class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors"
+                >arrow_forward_ios</span
+              >
+            </div>
+          </div>
+        </div>
+        <div class="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div
+            class="p-5 bg-white dark:bg-[#1a2130] rounded-xl border-l-4 border-primary shadow-sm"
+          >
+            <p
+              class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1"
+            >
+              Pedidos Activos
+            </p>
+            <div class="flex items-end justify-between">
+              <p class="text-2xl font-bold text-primary">24</p>
+              <span class="material-symbols-outlined text-primary/30"
+                >local_shipping</span
+              >
+            </div>
+          </div>
+          <div
+            class="p-5 bg-white dark:bg-[#1a2130] rounded-xl border-l-4 border-success shadow-sm"
+          >
+            <p
+              class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1"
+            >
+              Cotizaciones Pendientes
+            </p>
+            <div class="flex items-end justify-between">
+              <p class="text-2xl font-bold text-success">12</p>
+              <span class="material-symbols-outlined text-success/30"
+                >list_alt</span
+              >
+            </div>
+          </div>
+          <div
+            class="p-5 bg-white dark:bg-[#1a2130] rounded-xl border-l-4 border-danger shadow-sm"
+          >
+            <p
+              class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1"
+            >
+              Alertas Urgentes
+            </p>
+            <div class="flex items-end justify-between">
+              <p class="text-2xl font-bold text-danger">3</p>
+              <span class="material-symbols-outlined text-danger/30"
+                >warning</span
+              >
+            </div>
+          </div>
+          <div
+            class="p-5 bg-white dark:bg-[#1a2130] rounded-xl border-l-4 border-primary shadow-sm"
+          >
+            <p
+              class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1"
+            >
+              Stock General
+            </p>
+            <div class="flex items-end justify-between">
+              <p class="text-2xl font-bold text-primary">1,402</p>
+              <span class="material-symbols-outlined text-primary/30"
+                >inventory_2</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="fixed bottom-6 right-6 z-50">
+        <button
+          class="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-xl hover:scale-105 active:scale-95 transition-transform"
+        >
+          <span class="material-symbols-outlined text-[28px]">chat</span>
+          <span class="absolute -top-1 -right-1 flex h-4 w-4">
+            <span
+              class="animate-ping absolute inline-flex h-full w-full rounded-full bg-danger opacity-75"
+            ></span>
+            <span
+              class="relative inline-flex rounded-full h-4 w-4 bg-danger border-2 border-white"
+            ></span>
+          </span>
+        </button>
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,49 @@
+:root {
+  --primary-blue: #197fe6;
+  --accent-green: #2ecc71;
+  --accent-red: #e74c3c;
+  --bg-dark: #0a0f16;
+  --card-glass: rgba(10, 15, 22, 0.85);
+  --border-glow: rgba(25, 127, 230, 0.3);
+}
+
+body {
+  font-family: "Space Grotesk", sans-serif;
+  background-color: var(--bg-dark);
+  overflow-x: hidden;
+}
+
+.neural-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(circle at center, #0a1118 0%, #05080c 100%);
+}
+
+#neural-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glow-text {
+  text-shadow:
+    0 0 15px rgba(25, 127, 230, 0.6),
+    0 0 30px rgba(25, 127, 230, 0.3);
+}
+
+.glass-card {
+  background: var(--card-glass);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glow);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+}
+
+.accent-glow-green {
+  box-shadow: 0 0 20px rgba(46, 204, 113, 0.15);
+}
+
+.accent-glow-red {
+  box-shadow: 0 0 20px rgba(231, 76, 60, 0.15);
+}
