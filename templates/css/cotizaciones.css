@@ -162,3 +162,17 @@ textarea {
     page-break-after: always;
   }
 }
+
+/* Fix para html2pdf que usa la clase .printing */
+.printing .page {
+  margin: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+  /* Mantenemos background image si es parte del diseño, pro ajustamos margin */
+}
+
+/* Asegurar que las celdas se ajusten al contenido en modo impresión */
+.printing table td {
+  height: auto !important;
+  white-space: normal !important;
+}

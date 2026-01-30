@@ -476,12 +476,57 @@ function generatePDF() {
   document.body.classList.add("printing");
   const btns = document.querySelectorAll(".delete-btn");
   btns.forEach((b) => (b.style.display = "none"));
+
+  // Ocultar col PN (2) y col X (8)
+  const colsToHide = document.querySelectorAll(
+    ".table-cotizacion tr > td:nth-child(2), .table-cotizacion tr > td:nth-child(8)",
+  );
+  colsToHide.forEach((c) => (c.style.display = "none"));
+
+  // Reemplazar textareas por divs para que html2pdf respete los saltos de línea
+  const textareas = document.querySelectorAll("#pdf-container textarea");
+  const replacements = [];
+
+  textareas.forEach((ta) => {
+    const div = document.createElement("div");
+    div.innerText = ta.value; // innerText respeta \n
+    const computed = window.getComputedStyle(ta);
+
+    div.style.fontFamily = computed.fontFamily;
+    div.style.fontSize = computed.fontSize;
+    div.style.lineHeight = computed.lineHeight;
+    div.style.color = computed.color;
+    div.style.textAlign = computed.textAlign;
+
+    // Mejoras para el wrapping
+    div.style.whiteSpace = "pre-wrap";
+    div.style.wordBreak = "break-all"; // Fuerza el corte en palabras largas (ej: aaaaa...)
+    div.style.overflowWrap = "break-word";
+
+    div.style.padding = computed.padding;
+    div.style.minHeight = computed.minHeight;
+    div.style.boxSizing = "border-box"; // Asegurar cálculo correcto
+    div.style.width = "100%";
+
+    ta.parentNode.insertBefore(div, ta);
+    ta.style.display = "none";
+    replacements.push({ ta, div });
+  });
+
   html2pdf()
     .set(opt)
     .from(document.getElementById("pdf-container"))
     .save()
     .then(() => {
       btns.forEach((b) => (b.style.display = "inline-block"));
+      colsToHide.forEach((c) => (c.style.display = ""));
+
+      // Restaurar textareas
+      replacements.forEach((rep) => {
+        rep.div.remove();
+        rep.ta.style.display = "";
+      });
+
       document.body.classList.remove("printing");
     });
 }
