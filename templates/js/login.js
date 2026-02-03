@@ -64,6 +64,14 @@ loginForm.addEventListener("submit", async (e) => {
 });
 
 // Auto-focus en el primer campo
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("username").focus();
+  try {
+    const res = await fetch("/api/isLogin");
+    if (res.ok) {
+      window.location.href = "/panel";
+    }
+  } catch (e) {
+    // Si falla la verificación, simplemente nos quedamos en el login
+  }
 });

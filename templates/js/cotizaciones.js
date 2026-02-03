@@ -468,7 +468,7 @@ function restoreFooterEvents(el) {}
 function generatePDF() {
   const opt = {
     margin: 0,
-    filename: "cotizacion.pdf",
+    filename: `InterlabCot_${appData.header.numero}.pdf`,
     image: { type: "jpeg", quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true },
     jsPDF: { unit: "px", format: [816, 1056], orientation: "portrait" },
@@ -518,18 +518,10 @@ function generatePDF() {
     .from(document.getElementById("pdf-container"))
     .output("blob")
     .then((blob) => {
-      // 1. Descargar localmente
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = opt.filename;
-      link.click();
-      URL.revokeObjectURL(url);
-
       // 2. Subir al servidor (S3 Minio)
       const formData = new FormData();
       formData.append("folio", appData.header.numero);
-      formData.append("file", blob, "cotizacion.pdf");
+      formData.append("file", blob, opt.filename);
 
       fetch("/api/cotizaciones/save", {
         method: "POST",
@@ -542,6 +534,29 @@ function generatePDF() {
         .catch((err) => {
           console.error("Error al subir PDF:", err);
         });
+
+      // 1. Alerta Swal
+      Swal.fire({
+        title: "PDF Generado",
+        text: "¿Qué deseas hacer?",
+        icon: "success",
+        showCancelButton: true,
+        confirmButtonText: "Descargar",
+        cancelButtonText: "Cerrar",
+        allowOutsideClick: false,
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = opt.filename;
+          link.click();
+          URL.revokeObjectURL(url);
+          window.location.href = "/panel";
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+          window.location.href = "/panel";
+        }
+      });
 
       // 3. Restaurar UI
       btns.forEach((b) => (b.style.display = "inline-block"));

@@ -113,3 +113,27 @@ class VerifySession401(BaseModel):
             }
         }
     }
+
+class CotizacionFolio200(BaseModel):
+    folio: int
+    model_config = {
+        "json_schema_extra":{
+            "example":{
+                "folio": 123
+            }
+        }
+    }
+
+class CotizacionSave200(BaseModel):
+    status: str
+    message: str
+    url: str
+    model_config = {
+        "json_schema_extra":{
+            "example":{
+                "status": "success",
+                "message": "Cotización guardada",
+                "url": "https://s3.example.com/bucket/cotizaciones/InterlabCot_123.pdf"
+            }
+        }
+    }

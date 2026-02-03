@@ -56,32 +56,42 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
 
 # ----------- FRONTEND ----------- #
 @app.get("/", include_in_schema=False)
-def read_root():
+def read_root(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    if is_logged_in:
+        return RedirectResponse(url="/panel", status_code=302)
     return FileResponse("templates/index.html")
 
 @app.get("/login", include_in_schema=False)
 def read_login(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
     if is_logged_in:
-        return RedirectResponse(url="/")
+        return RedirectResponse(url="/panel", status_code=302)
     return FileResponse("templates/login.html")
 
 @app.get("/2FA", include_in_schema=False)
 def read_2fa(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
     if is_logged_in:
-        return RedirectResponse(url="/")
+        return RedirectResponse(url="/", status_code=302)
     return FileResponse("templates/2FA.html")
 
 @app.get("/panel", include_in_schema=False)
 def read_panel(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
     if not is_logged_in:
-        return RedirectResponse(url="/")
-    return FileResponse("templates/panel.html")
+        return RedirectResponse(url="/", status_code=302)
+    response = FileResponse("templates/panel.html")
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/panel/cotizaciones", include_in_schema=False)
 def read_cotizaciones(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
     if not is_logged_in:
-        return RedirectResponse(url="/")
-    return FileResponse("templates/cotizaciones.html")
+        return RedirectResponse(url="/", status_code=302)
+    response = FileResponse("templates/cotizaciones.html")
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 # ----------- BACKEND ----------- #
 # Endpoint Login
@@ -193,14 +203,30 @@ def config2FA(data: schemasPayload.Verify2FA, token_data: dict = Depends(VerifyT
     return TwoFAController.config2FA(username, data.code)
 
 # ----------- COTIZACIONES ----------- #
-@app.get("/api/cotizaciones/folio", tags=["Cotizaciones"])
+@app.get(
+    "/api/cotizaciones/folio",
+    tags=["Cotizaciones"],
+    summary="Obtener siguiente folio",
+    responses={
+        200: {"model": Schemas.CotizacionFolio200},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
 def get_folio(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
     if not is_logged_in:
         return JSONResponse(status_code=401, content={"detail": "No autorizado"})
     return CotizacionesController.get_next_folio()
 
 from fastapi import UploadFile, File, Form
-@app.post("/api/cotizaciones/save", tags=["Cotizaciones"])
+@app.post(
+    "/api/cotizaciones/save",
+    tags=["Cotizaciones"],
+    summary="Guardar cotización",
+    responses={
+        200: {"model": Schemas.CotizacionSave200},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
 async def save_cotizacion(
     folio: int = Form(...), 
     file: UploadFile = File(...),
