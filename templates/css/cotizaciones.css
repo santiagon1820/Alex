@@ -1,56 +1,211 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
+
 body {
-  font-family: Arial, sans-serif;
-  background-color: #525659;
-  padding: 20px;
+  font-family: "Inter", sans-serif;
+  background-color: #f3f4f6;
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
 }
 
-.controls {
-  max-width: 816px;
-  margin: 0 auto 20px auto;
+/* --- Layout --- */
+.app-container {
   display: flex;
-  gap: 10px;
-  background: white;
-  padding: 10px;
-  border-radius: 5px;
+  width: 100vw;
+  height: 100vh;
 }
-.btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
+
+/* Sidebar */
+.sidebar {
+  width: 300px;
+  background-color: white;
+  border-right: 1px solid #e5e7eb;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sidebar-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.company-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.company-card:hover {
+  background-color: #f9fafb;
+}
+
+.company-card.active {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.company-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #374151;
+  font-size: 1.25rem;
+}
+
+.company-card.active .company-icon {
+  background-color: #3b82f6;
   color: white;
-  font-weight: bold;
+  border-color: #3b82f6;
 }
-.btn-success {
-  background-color: #28a745;
+
+.company-info h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
 }
+
+.company-info p {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Topbar */
+.topbar {
+  height: 64px;
+  background-color: white;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+}
+
+.topbar-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.link-btn {
+  color: #6b7280;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.link-btn:hover {
+  color: #374151;
+}
+
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.2s;
+}
+
 .btn-primary {
-  background-color: #007bff;
+  background-color: #3b82f6;
+  color: white;
 }
-.btn:hover {
-  opacity: 0.9;
+.btn-primary:hover {
+  background-color: #2563eb;
+}
+
+.btn-success {
+  background-color: #10b981;
+  color: white;
+}
+.btn-success:hover {
+  background-color: #059669;
+}
+
+.btn-secondary {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+.btn-secondary:hover {
+  background-color: #f9fafb;
+}
+
+/* PDF Area */
+.pdf-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  display: flex;
+  justify-content: center;
+  background-color: #f3f4f6;
 }
 
 #pdf-container {
-  max-width: 816px;
-  margin: 0 auto;
+  width: 816px; /* Fixed width for preview */
 }
 
+/* --- Document Styles (Legacy) --- */
 .page {
   width: 816px;
   height: 1056px;
   background-color: white;
   margin-bottom: 20px;
   position: relative;
-  background-image: url("https://s3-mx-1.mglab.com/mglab/interlab.png");
+  /* background-image se setea via JS o estilo inline ahora si queremos ser dinamicos, o dejamos default */
   background-size: cover;
   background-position: center;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
   overflow: hidden;
 }
 
@@ -90,7 +245,7 @@ textarea {
   border: none;
   background: transparent;
   font-size: 11px;
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   outline: none;
 }
 
@@ -148,13 +303,23 @@ textarea {
   font-weight: bold;
 }
 
+/* Printing logic */
 @media print {
   body {
     background: white;
     padding: 0;
+    height: auto;
+    overflow: visible;
   }
-  .controls {
+  .app-container,
+  .sidebar,
+  .topbar {
     display: none;
+  }
+  .pdf-scroll-area {
+    padding: 0;
+    overflow: visible;
+    display: block;
   }
   .page {
     margin: 0;
@@ -163,15 +328,17 @@ textarea {
   }
 }
 
-/* Fix para html2pdf que usa la clase .printing */
+.printing .app-container {
+  display: none !important;
+}
+
+/* Fix para html2pdf que usa la clase .printing en body */
 .printing .page {
   margin: 0 !important;
   box-shadow: none !important;
   border: none !important;
-  /* Mantenemos background image si es parte del diseño, pro ajustamos margin */
 }
 
-/* Asegurar que las celdas se ajusten al contenido en modo impresión */
 .printing table td {
   height: auto !important;
   white-space: normal !important;

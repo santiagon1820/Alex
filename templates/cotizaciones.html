@@ -3,22 +3,94 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cotización INTERLAB - Final Limitada</title>
+    <title>Cotización - Editor</title>
+    <!-- Material Icons & Fonts -->
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined"
+      rel="stylesheet"
+    />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="/css/cotizaciones.css" />
   </head>
   <body>
-    <div class="controls">
-      <button class="btn btn-success" onclick="addNewRow()">
-        ➕ Añadir Partida
-      </button>
-      <button class="btn btn-primary" onclick="generatePDF()">
-        📄 Generar PDF
-      </button>
+    <div class="app-container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <a
+          href="/panel"
+          class="btn btn-secondary"
+          style="justify-content: center; width: 100%; margin-bottom: 20px"
+        >
+          <span class="material-icons-outlined">dashboard</span>
+          Inicio
+        </a>
+        <h2 class="sidebar-title">Empresa Emisora</h2>
+
+        <div
+          class="company-card active"
+          onclick="changeCompany('interlab')"
+          id="card-interlab"
+        >
+          <div class="company-icon">I</div>
+          <div class="company-info">
+            <h3>Interlab Digital</h3>
+            <p>México S.A. de C.V.</p>
+          </div>
+        </div>
+
+        <div
+          class="company-card"
+          onclick="changeCompany('davana')"
+          id="card-davana"
+        >
+          <div class="company-icon">D</div>
+          <div class="company-info">
+            <h3>Davana</h3>
+            <p>México S. de R.L.</p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+          <div class="topbar-title">
+            <span class="material-icons-outlined">edit_document</span>
+            <span id="editor-title">Editor Interlab</span>
+          </div>
+
+          <div class="topbar-actions">
+            <a href="/tickets" class="link-btn">
+              <span class="material-icons-outlined">help_outline</span>
+              Ayuda / Levantar Ticket
+            </a>
+
+            <button class="btn btn-secondary" onclick="addNewRow()">
+              <span class="material-icons-outlined">add</span>
+              Partida
+            </button>
+
+            <button class="btn btn-primary" onclick="generatePDF()">
+              <span class="material-icons-outlined">picture_as_pdf</span>
+              Generar PDF
+            </button>
+          </div>
+        </header>
+
+        <!-- PDF Scroll Area -->
+        <div class="pdf-scroll-area">
+          <div id="pdf-container"></div>
+        </div>
+      </main>
     </div>
 
-    <div id="pdf-container"></div>
+    <!-- Hidden Select (Mantenemos por compatibilidad si algo lo busca, pero oculto) -->
+    <select id="empresaSelect" style="display: none">
+      <option value="interlab">Interlab</option>
+      <option value="davana">Davana</option>
+    </select>
 
     <script src="/js/cotizaciones.js"></script>
   </body>

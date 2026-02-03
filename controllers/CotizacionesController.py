@@ -10,8 +10,15 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-def get_next_folio():
-    query = "SELECT MAX(id) as max_id FROM interlab"
+def get_next_folio(empresa: str):
+    # Validar tabla para evitar SQL Injection (aunque sea interno, buena práctica)
+    table_map = {
+        "interlab": "interlab",
+        "davana": "davana"
+    }
+    table = table_map.get(empresa.lower(), "interlab")
+    
+    query = f"SELECT MAX(id) as max_id FROM {table}"
     try:
         result = db.GETDB(query)
         
@@ -22,7 +29,17 @@ def get_next_folio():
     except Exception as e:
         return {"folio": 1, "error": str(e)}
 
-async def save_cotizacion(folio: int, file: UploadFile = File(...)):
+async def save_cotizacion(folio: int, file: UploadFile, empresa: str):
+    # Configuración por empresa
+    company_settings = {
+        "interlab": {"table": "interlab", "prefix": "InterlabCot"},
+        "davana": {"table": "davana", "prefix": "DavanaCot"}
+    }
+    
+    settings = company_settings.get(empresa.lower(), company_settings["interlab"])
+    table = settings["table"]
+    prefix = settings["prefix"]
+
     # 1. Guardar en S3 (MinIO)
     s3_endpoint = os.getenv("S3_ENDPOINT")
     s3_client = boto3.client(
@@ -35,7 +52,7 @@ async def save_cotizacion(folio: int, file: UploadFile = File(...)):
     )
     
     bucket = os.getenv("S3_BUCKET")
-    file_name = f"cotizaciones/InterlabCot_{folio}.pdf"
+    file_name = f"cotizaciones/{prefix}_{folio}.pdf"
     
     try:
         file.file.seek(0) # Asegurar que estamos al inicio del archivo
@@ -47,7 +64,7 @@ async def save_cotizacion(folio: int, file: UploadFile = File(...)):
         file_url = f"{base_url}/{bucket}/{file_name}"
         
         # 2. Guardar en MySQL
-        query = "INSERT INTO interlab (id, pdf) VALUES (%s, %s)"
+        query = f"INSERT INTO {table} (id, pdf) VALUES (%s, %s)"
         params = (folio, file_url)
         
         success = db.POSTDB(query, params)

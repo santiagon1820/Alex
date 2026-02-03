@@ -56,15 +56,68 @@ window.onload = function () {
   updateVisualsOnly(appData.rows[0].id);
 };
 
+const companyConfig = {
+  interlab: {
+    nombre: "INTERLAB DIGITAL S.A DE C.V",
+    logo: "interlabSign.png", // Nota, segun el codigo original se usaba para la firma, se mantiene
+    headerLogo: "interlab.png", // Asumido si existe logo header
+    firma: "Karla Fabiola Moron Tobon",
+    prefix: "InterlabCot",
+  },
+  davana: {
+    nombre: "DAVANA S.A DE C.V", // AJUSTAR NOMBRE REAL SI ES OTRO
+    logo: "davanaSign.png",
+    headerLogo: "davana.png",
+    firma: "Representante Davana",
+    prefix: "DavanaCot",
+  },
+};
+
+let currentCompany = "interlab";
+
 async function fetchFolio() {
   try {
-    const response = await fetch("/api/cotizaciones/folio");
+    const response = await fetch(
+      `/api/cotizaciones/folio?empresa=${currentCompany}`,
+    );
     const data = await response.json();
     appData.header.numero = data.folio;
     render();
   } catch (error) {
     console.error("Error al obtener el folio:", error);
   }
+}
+
+function changeCompany(companyName) {
+  // Si viene onClick desde el sidebar
+  if (companyName) {
+    currentCompany = companyName;
+    // Update hidden select
+    const select = document.getElementById("empresaSelect");
+    if (select) select.value = companyName;
+  } else {
+    // Si viene desde el select (fallback)
+    const select = document.getElementById("empresaSelect");
+    currentCompany = select.value;
+  }
+
+  // Update Sidebar UI
+  document.querySelectorAll(".company-card").forEach((card) => {
+    card.classList.remove("active");
+  });
+  const activeCard = document.getElementById(`card-${currentCompany}`);
+  if (activeCard) activeCard.classList.add("active");
+
+  // Update Topbar Title
+  const titleEl = document.getElementById("editor-title");
+  if (titleEl) {
+    // Capitalize Text
+    const name =
+      currentCompany.charAt(0).toUpperCase() + currentCompany.slice(1);
+    titleEl.textContent = `Editor ${name}`;
+  }
+
+  fetchFolio();
 }
 
 function createNewRowObj() {
@@ -259,6 +312,10 @@ function render() {
   while (!finishedRows || !finishedFooter) {
     const page = document.createElement("div");
     page.className = "page";
+    // Set background image dynamically based on selected company
+    const config = companyConfig[currentCompany];
+    page.style.backgroundImage = `url("https://s3-mx-1.mglab.com/mglab/${config.headerLogo}")`;
+
     const content = document.createElement("div");
     content.className = "page-content";
     content.style.height = MAX_H + "px";
@@ -384,9 +441,10 @@ function createRowTR(data, index) {
 }
 
 function getHeaderHTML() {
+  const config = companyConfig[currentCompany];
   return `
                 <div style="margin-bottom: 10px;">
-                    <table><tr><td class="bg-blue text-center font-bold">INTERLAB DIGITAL S.A DE C.V</td></tr></table>
+                    <table><tr><td class="bg-blue text-center font-bold">${config.nombre}</td></tr></table>
                     <table style="margin-top: 5px;">
                         <tr>
                             <td class="bg-blue font-bold" style="width:10%">Fecha:</td>
@@ -440,7 +498,10 @@ function getDatosEmpresaHTML() {
   return `<table><tr><td class="text-center font-bold bg-blue">DATOS DE EMPRESA</td></tr><tr><td class="text-left"><strong>RFC:</strong> IDI240301NS2</td></tr></table>`;
 }
 function getFirmaHTML() {
-  return `<table><tr><td class="text-center font-bold bg-blue">ATENTAMENTE</td></tr><tr><td class="text-center" style="height: 100px; vertical-align: bottom;"><img src="https://s3-mx-1.mglab.com/mglab/interlabSign.png" class="img-firma"><div class="firma-linea"></div><strong>Karla Fabiola Moron Tobon</strong><br>VENTAS</td></tr></table>`;
+  const config = companyConfig[currentCompany];
+  // Ajuste de URL de imagen según empresa
+  const imgUrl = `https://s3-mx-1.mglab.com/mglab/${config.logo}`;
+  return `<table><tr><td class="text-center font-bold bg-blue">ATENTAMENTE</td></tr><tr><td class="text-center" style="height: 100px; vertical-align: bottom;"><img src="${imgUrl}" class="img-firma"><div class="firma-linea"></div><strong>${config.firma}</strong><br>VENTAS</td></tr></table>`;
 }
 
 function appendHTML(parent, html) {
@@ -468,7 +529,7 @@ function restoreFooterEvents(el) {}
 function generatePDF() {
   const opt = {
     margin: 0,
-    filename: `InterlabCot_${appData.header.numero}.pdf`,
+    filename: `${companyConfig[currentCompany].prefix}_${appData.header.numero}.pdf`,
     image: { type: "jpeg", quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true },
     jsPDF: { unit: "px", format: [816, 1056], orientation: "portrait" },
@@ -521,6 +582,7 @@ function generatePDF() {
       // 2. Subir al servidor (S3 Minio)
       const formData = new FormData();
       formData.append("folio", appData.header.numero);
+      formData.append("empresa", currentCompany);
       formData.append("file", blob, opt.filename);
 
       fetch("/api/cotizaciones/save", {

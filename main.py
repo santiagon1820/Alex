@@ -212,10 +212,10 @@ def config2FA(data: schemasPayload.Verify2FA, token_data: dict = Depends(VerifyT
         500: {"model": Schemas.InternalServerError}
     }
 )
-def get_folio(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+def get_folio(empresa: str = "interlab", is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
     if not is_logged_in:
         return JSONResponse(status_code=401, content={"detail": "No autorizado"})
-    return CotizacionesController.get_next_folio()
+    return CotizacionesController.get_next_folio(empresa)
 
 from fastapi import UploadFile, File, Form
 @app.post(
@@ -229,9 +229,10 @@ from fastapi import UploadFile, File, Form
 )
 async def save_cotizacion(
     folio: int = Form(...), 
+    empresa: str = Form(...),
     file: UploadFile = File(...),
     is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)
 ):
     if not is_logged_in:
         return JSONResponse(status_code=401, content={"detail": "No autorizado"})
-    return await CotizacionesController.save_cotizacion(folio, file)
+    return await CotizacionesController.save_cotizacion(folio, file, empresa)
