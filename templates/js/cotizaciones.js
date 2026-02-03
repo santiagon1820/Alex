@@ -1,7 +1,10 @@
 const PAGE_H_PX = 1056;
-const CONTENT_START = 175;
-const MARGIN_BOTTOM = 180;
-const MAX_H = PAGE_H_PX - CONTENT_START - MARGIN_BOTTOM;
+let CONTENT_START = 175; // Ahora dinámico
+let MARGIN_BOTTOM = 220; // Aumentado para más espacio al final de la página
+function getMaxH() {
+  return PAGE_H_PX - CONTENT_START - MARGIN_BOTTOM;
+}
+let MAX_H = getMaxH();
 
 const LIMIT_LINES = 10;
 const LIMIT_CHARS = 400;
@@ -59,17 +62,23 @@ window.onload = function () {
 const companyConfig = {
   interlab: {
     nombre: "INTERLAB DIGITAL S.A DE C.V",
-    logo: "interlabSign.png", // Nota, segun el codigo original se usaba para la firma, se mantiene
-    headerLogo: "interlab.png", // Asumido si existe logo header
+    logo: "interlabSign.png",
+    headerLogo: "interlab.png",
     firma: "Karla Fabiola Moron Tobon",
     prefix: "InterlabCot",
+    margins: { top: 175, bottom: 220 },
+    rfc: "IDI240301NS2",
+    rupc: "P38684",
   },
   davana: {
-    nombre: "DAVANA S.A DE C.V", // AJUSTAR NOMBRE REAL SI ES OTRO
+    nombre: "DAVANA S.A DE C.V",
     logo: "davanaSign.png",
     headerLogo: "davana.png",
-    firma: "Representante Davana",
+    firma: "Juan Daniel Dives Barragán",
     prefix: "DavanaCot",
+    margins: { top: 110, bottom: 145 }, // Reducido top para menos espacio entre logo y cotización
+    rfc: "IDA220310C28",
+    rupc: "P38543",
   },
 };
 
@@ -99,6 +108,13 @@ function changeCompany(companyName) {
     // Si viene desde el select (fallback)
     const select = document.getElementById("empresaSelect");
     currentCompany = select.value;
+  }
+
+  // Update Margins based on company
+  if (companyConfig[currentCompany]) {
+    CONTENT_START = companyConfig[currentCompany].margins.top;
+    MARGIN_BOTTOM = companyConfig[currentCompany].margins.bottom;
+    MAX_H = getMaxH();
   }
 
   // Update Sidebar UI
@@ -316,8 +332,16 @@ function render() {
     const config = companyConfig[currentCompany];
     page.style.backgroundImage = `url("https://s3-mx-1.mglab.com/mglab/${config.headerLogo}")`;
 
+    // Add specific class for CSS styling (colors, borders)
+    if (currentCompany === "davana") {
+      page.classList.add("davana-mode");
+    } else {
+      page.classList.add("interlab-mode");
+    }
+
     const content = document.createElement("div");
     content.className = "page-content";
+    content.style.top = CONTENT_START + "px"; // Asegurar que el top sea dinámico
     content.style.height = MAX_H + "px";
     page.appendChild(content);
     container.appendChild(page);
@@ -333,11 +357,14 @@ function render() {
     if (queueRows.length > 0) {
       const tableStruct = document.createElement("table");
       tableStruct.className = "table-cotizacion";
+      // Headers deben ser iguales para ambas empresas según solicitud
       tableStruct.innerHTML = `<thead><tr>
-                        <td style="width:5%">PROG</td><td style="width:11%">PN</td><td style="width:36%">DESCRIPCIÓN</td>
-                        <td style="width:8%">CANT.</td><td style="width:10%">U.M.</td><td style="width:10%">P.U</td>
-                        <td style="width:15%">TOTAL</td><td style="width:5%">X</td>
+                        <td style="width:5%">Partida</td><td style="width:8%">Cantidad</td><td style="width:10%">U.M</td>
+                        <td style="width:11%">P.N.</td><td style="width:36%">Descripción</td>
+                        <td style="width:10%">Precio U.</td>
+                        <td style="width:15%">Total</td><td style="width:5%">X</td>
                     </tr></thead><tbody></tbody>`;
+
       content.appendChild(tableStruct);
       currentY += tableStruct.querySelector("thead").offsetHeight;
 
@@ -417,24 +444,27 @@ function render() {
 function createRowTR(data, index) {
   const tr = document.createElement("tr");
   const totalRow = data.cantidad * data.precio;
+  const isDavana = currentCompany === "davana";
+  const textColor = "#000"; // Siempre negro a solicitud del usuario
+
   tr.innerHTML = `
-                <td class="text-center">${index}</td>
-                <td><input id="pn_${data.id}" value="${data.pn}" oninput="updateRow('${data.id}', 'pn', this.value, this)"></td>
+                <td class="text-center font-bold" style="color:${textColor};">${index}</td>
+                <td><input type="number" id="cant_${data.id}" class="text-center font-bold" style="color:${textColor};" value="${data.cantidad}" oninput="updateRow('${data.id}', 'cantidad', this.value, this)"></td>
                 <td>
-                    <textarea id="desc_${data.id}" oninput="updateRow('${data.id}', 'descripcion', this.value, this)">${data.descripcion}</textarea>
-                </td>
-                <td><input type="number" id="cant_${data.id}" class="text-center" value="${data.cantidad}" oninput="updateRow('${data.id}', 'cantidad', this.value, this)"></td>
-                <td>
-                    <select onchange="updateRow('${data.id}', 'um', this.value, this)">
-                        <option value="PZA" ${data.um === "PZA" ? "selected" : ""}>PZA</option>
+                    <select onchange="updateRow('${data.id}', 'um', this.value, this)" style="color:${textColor};">
+                        <option value="PIEZA" ${data.um === "PZA" || data.um === "PIEZA" ? "selected" : ""}>PIEZA</option>
                         <option value="KG" ${data.um === "KG" ? "selected" : ""}>KG</option>
                         <option value="LT" ${data.um === "LT" ? "selected" : ""}>LT</option>
                         <option value="SRV" ${data.um === "SRV" ? "selected" : ""}>SRV</option>
                         <option value="JGO" ${data.um === "JGO" ? "selected" : ""}>JGO</option>
                     </select>
                 </td>
-                <td><input type="number" id="prec_${data.id}" value="${data.precio}" oninput="updateRow('${data.id}', 'precio', this.value, this)"></td>
-                <td class="text-right" id="total_cell_${data.id}">${formatMoney(totalRow)}</td>
+                <td><input id="pn_${data.id}" value="${data.pn}" placeholder="P.N." oninput="updateRow('${data.id}', 'pn', this.value, this)" style="color:${textColor};"></td>
+                <td>
+                    <textarea id="desc_${data.id}" placeholder="" oninput="updateRow('${data.id}', 'descripcion', this.value, this)" style="color:${textColor};">${data.descripcion}</textarea>
+                </td>
+                <td><div style="display:flex; align-items:center;"><span style="color:${textColor}; font-weight:bold;">$</span><input type="number" id="prec_${data.id}" class="text-right" style="color:${textColor}; font-weight:bold;" value="${data.precio}" oninput="updateRow('${data.id}', 'precio', this.value, this)"></div></td>
+                <td class="text-right font-bold" style="color:${textColor};" id="total_cell_${data.id}">${formatMoney(totalRow)}</td>
                 <td class="text-center"><button class="delete-btn" onclick="deleteRow('${data.id}')">🗑</button></td>
             `;
   return tr;
@@ -442,6 +472,45 @@ function createRowTR(data, index) {
 
 function getHeaderHTML() {
   const config = companyConfig[currentCompany];
+
+  if (currentCompany === "davana") {
+    return `
+            <div style="margin-bottom: 20px;">
+                 <table style="width:100%; text-align:center; background-color:#dfe3e6; margin-bottom:5px;">
+                    <tr><td style="padding:5px; font-weight:bold; font-size:12px; border:none; color:#333;">COTIZACIÓN</td></tr>
+                 </table>
+                 
+                 <table style="border:1px solid #9daab6;">
+                    <tr>
+                        <td style="width:15%; background-color:#dfe3e6; font-weight:bold; border-color:#9daab6; color:#333;">Dependencia:</td>
+                        <td style="width:45%; border-color:#9daab6; font-weight:bold; color: #333; font-size:13px;">
+                            <input id="h_dependencia" value="${appData.header.dependencia}" placeholder="" style="font-weight:bold; color:#333;">
+                        </td>
+                        <td style="width:15%; background-color:#dfe3e6; font-weight:bold; border-color:#9daab6; color:#333;">Cotización</td>
+                        <td style="width:25%; border-color:#9daab6; text-align:center;">
+                             <input id="h_numero" class="text-center" value="${appData.header.numero}" readonly style="color:#333;">
+                        </td>
+                    </tr>
+                    <tr>
+                         <td style="background-color:#dfe3e6; font-weight:bold; border-color:#9daab6; color:#333;">A quien<br>Corresponda:</td>
+                         <td style="border-color:#9daab6;">
+                            <input id="h_asunto" value="${appData.header.asunto}" placeholder="Presente" style="color:#333;">
+                         </td>
+                         <td style="background-color:#dfe3e6; font-weight:bold; border-color:#9daab6; color:#333;">Fecha</td>
+                         <td style="border-color:#9daab6; text-align:center; color:#333; font-weight:bold;">
+                            <input id="h_fecha" value="${appData.header.fecha}" style="color:#333; text-align:center; font-weight:bold;">
+                         </td>
+                    </tr>
+                 </table>
+                 
+                 <div style="text-align:center; font-style:italic; font-size:10px; margin-top:10px; color:#666;">
+                    Por medio del presente, hacemos llegar la cotización que fue solicitada:
+                 </div>
+            </div>
+        `;
+  }
+
+  // INTERLAB (DEFAULT)
   return `
                 <div style="margin-bottom: 10px;">
                     <table><tr><td class="bg-blue text-center font-bold">${config.nombre}</td></tr></table>
@@ -452,7 +521,7 @@ function getHeaderHTML() {
                             <td class="bg-blue font-bold" style="width:10%">No.</td>
                             <td style="width:20%"><input id="h_numero" class="text-center" value="${appData.header.numero}" readonly></td>
                             <td class="bg-blue font-bold" style="width:10%">RUPC</td>
-                            <td class="text-center" style="width:20%">P38684</td>
+                            <td class="text-center" style="width:20%">${config.rupc}</td>
                         </tr>
                     </table>
                     <table style="margin-top: 5px;">
@@ -479,6 +548,11 @@ function getTotalesHTML(sub, iva, total) {
 }
 
 function getLetraHTML() {
+  if (currentCompany === "davana") {
+    return `<div style="background-color:#dfe3e6; padding:5px; text-align:center; font-weight:bold; font-size:10px; border:1px solid #9daab6; margin-top:10px;">
+             <input id="f_letra" value="${appData.footer.cantidadLetra}" readonly style="text-align:center; font-weight:bold;">
+            </div>`;
+  }
   return `<table>
                 <tr><td class="text-center font-bold bg-blue">CANTIDAD CON LETRA</td></tr>
                 <tr><td><input id="f_letra" value="${appData.footer.cantidadLetra}" readonly></td></tr>
@@ -486,6 +560,42 @@ function getLetraHTML() {
 }
 
 function getCondicionesHTML() {
+  if (currentCompany === "davana") {
+    const config = companyConfig[currentCompany];
+    // Davana: RFC/RUPC Bar first, then Conditions
+    return `
+        <!-- RFC Bar -->
+        <div style="text-align:center; font-size:10px; font-weight:bold; margin-top:5px; margin-bottom:10px; color:#333; border:1px solid #9daab6; padding:3px; background-color:#dfe3e6;">
+           RFC: ${config.rfc} | RUPC: ${config.rupc} | DAVANA MEXICO S DE RL DE CV
+        </div>
+
+        <table style="margin-top:0px; border:1px solid #9daab6;">
+             <tr>
+               <td style="width:25%; background-color:#fff; border-color:#9daab6;">Tiempo de entrega:</td>
+               <td style="text-align:center; border-color:#9daab6;">
+                  <input value="15 días hábiles" style="color:#000; font-weight:bold; text-align:center;">
+               </td>
+             </tr>
+             <tr>
+               <td style="width:25%; background-color:#fff; border-color:#9daab6;">Vigencia de Cotización:</td>
+               <td style="text-align:center; border-color:#9daab6;">
+                  <input value="90 días naturales" style="text-align:center; color:#000;">
+               </td>
+             </tr>
+             <tr>
+               <td style="width:25%; background-color:#fff; border-color:#9daab6;">Crédito:</td>
+               <td style="text-align:center; border-color:#9daab6;">
+                  <input value="30 días naturales" style="text-align:center; color:#000;">
+               </td>
+             </tr>
+             <tr>
+               <td style="width:25%; background-color:#fff; border-color:#9daab6;">Garantía:</td>
+               <td style="text-align:center; border-color:#9daab6;">
+                  <input value="3 años" style="color:#000; font-weight:bold; text-align:center;">
+               </td>
+             </tr>
+        </table>`;
+  }
   return `<table>
                 <tr><td class="text-center font-bold bg-blue">CONDICIONES DE PAGO</td></tr>
                 <tr><td>
@@ -495,12 +605,29 @@ function getCondicionesHTML() {
 }
 
 function getDatosEmpresaHTML() {
-  return `<table><tr><td class="text-center font-bold bg-blue">DATOS DE EMPRESA</td></tr><tr><td class="text-left"><strong>RFC:</strong> IDI240301NS2</td></tr></table>`;
+  const config = companyConfig[currentCompany];
+  if (currentCompany === "davana") {
+    return ``; // Empty because it's now integrated above
+  }
+  return `<table><tr><td class="text-center font-bold bg-blue">DATOS DE EMPRESA</td></tr><tr><td class="text-left"><strong>RFC:</strong> ${config.rfc}</td></tr></table>`;
 }
 function getFirmaHTML() {
   const config = companyConfig[currentCompany];
   // Ajuste de URL de imagen según empresa
   const imgUrl = `https://s3-mx-1.mglab.com/mglab/${config.logo}`;
+
+  if (currentCompany === "davana") {
+    return `<div style="text-align:center; margin-top:40px;">
+                <div style="font-size:9px; font-weight:bold; color:#666; margin-bottom:10px;">ATENTAMENTE</div>
+                <div style="height: 100px; display:flex; align-items:flex-end; justify-content:center;">
+                    <img src="${imgUrl}" class="img-firma" style="max-height:100px;">
+                </div>
+                <div style="width:200px; border-top:1px solid #999; margin:5px auto;"></div>
+                <div style="font-size:10px; font-weight:bold;">${config.firma}</div>
+                <div style="font-size:9px;">Apoderado Legal</div>
+                <div style="background-color:#dfe3e6; color:#333; font-weight:bold; font-size:9px; padding:5px; width:220px; margin:10px auto; border:1px solid #ccc;">DAVANA MEXICO S DE RL DE CV</div>
+             </div>`;
+  }
   return `<table><tr><td class="text-center font-bold bg-blue">ATENTAMENTE</td></tr><tr><td class="text-center" style="height: 100px; vertical-align: bottom;"><img src="${imgUrl}" class="img-firma"><div class="firma-linea"></div><strong>${config.firma}</strong><br>VENTAS</td></tr></table>`;
 }
 
@@ -538,9 +665,9 @@ function generatePDF() {
   const btns = document.querySelectorAll(".delete-btn");
   btns.forEach((b) => (b.style.display = "none"));
 
-  // Ocultar col PN (2) y col X (8)
+  // Ocultar col SKU (4) y col X (8)
   const colsToHide = document.querySelectorAll(
-    ".table-cotizacion tr > td:nth-child(2), .table-cotizacion tr > td:nth-child(8)",
+    ".table-cotizacion tr > td:nth-child(4), .table-cotizacion tr > td:nth-child(8)",
   );
   colsToHide.forEach((c) => (c.style.display = "none"));
 

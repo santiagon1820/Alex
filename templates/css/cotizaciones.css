@@ -238,6 +238,33 @@ table td {
   border: 1px solid #0070c0;
 }
 
+/* Estilos específicos para Davana */
+.davana-mode table td {
+  border-color: #9daab6 !important;
+}
+
+.davana-mode .table-cotizacion thead td {
+  background-color: #dfe3e6 !important;
+  border-color: #9daab6 !important;
+  color: #333 !important;
+}
+
+.davana-mode .bg-blue {
+  background-color: #dfe3e6 !important;
+}
+
+/* Estilos específicos para Interlab (por defecto o explicito) */
+.interlab-mode table td {
+  border-color: #0070c0;
+}
+.interlab-mode .table-cotizacion thead td {
+  background-color: rgb(192, 230, 245);
+  border-color: #0070c0;
+}
+.interlab-mode .bg-blue {
+  background-color: rgb(192, 230, 245);
+}
+
 input,
 select,
 textarea {
@@ -281,7 +308,7 @@ textarea {
   width: 40%;
   float: right;
   margin-bottom: 5px;
-  background: white;
+  background: transparent;
 }
 .firma-linea {
   border-top: 1px solid #333;
