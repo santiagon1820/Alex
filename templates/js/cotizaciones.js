@@ -36,7 +36,7 @@ let appData = {
   rows: [],
   footer: {
     cantidadLetra: "",
-    condiciones: `• CONDICION DE PAGO: 30  Días habiles
+    condiciones: `• CONDICION DE PAGO: 30  Días hábiles
 • VIGENCIA DE COTIZACION: 60 Días naturales
 • GARANTIA:
 • TIEMPO DE ENTREGA:
@@ -516,8 +516,34 @@ function generatePDF() {
   html2pdf()
     .set(opt)
     .from(document.getElementById("pdf-container"))
-    .save()
-    .then(() => {
+    .output("blob")
+    .then((blob) => {
+      // 1. Descargar localmente
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = opt.filename;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      // 2. Subir al servidor (S3 Minio)
+      const formData = new FormData();
+      formData.append("folio", appData.header.numero);
+      formData.append("file", blob, "cotizacion.pdf");
+
+      fetch("/api/cotizaciones/save", {
+        method: "POST",
+        body: formData,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("PDF subido correctamente:", data);
+        })
+        .catch((err) => {
+          console.error("Error al subir PDF:", err);
+        });
+
+      // 3. Restaurar UI
       btns.forEach((b) => (b.style.display = "inline-block"));
       colsToHide.forEach((c) => (c.style.display = ""));
 

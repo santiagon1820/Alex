@@ -35,7 +35,7 @@ async def save_cotizacion(folio: int, file: UploadFile = File(...)):
     )
     
     bucket = os.getenv("S3_BUCKET")
-    file_name = f"cotizaciones/InterlabCot{folio}.pdf"
+    file_name = f"cotizaciones/InterlabCot_{folio}.pdf"
     
     try:
         file.file.seek(0) # Asegurar que estamos al inicio del archivo
