@@ -10,56 +10,80 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+import threading
+import time
+from fastapi import UploadFile, File, Form, HTTPException
+
+# Estado global para controlar el flujo: GetFolio -> Render -> Save
+# Usamos un diccionario para bloquear por empresa
+generation_locks = {
+    "interlab": {"is_busy": False, "timestamp": 0},
+    "davana": {"is_busy": False, "timestamp": 0}
+}
+lock_mutex = threading.Lock()
+GEN_TIMEOUT = 5 # Máximo 5 segundos por proceso completo
+
 def get_next_folio(empresa: str):
-    # Validar tabla para evitar SQL Injection (aunque sea interno, buena práctica)
-    table_map = {
-        "interlab": "interlab",
-        "davana": "davana"
-    }
-    table = table_map.get(empresa.lower(), "interlab")
-    
-    query = f"SELECT MAX(id) as max_id FROM {table}"
-    try:
-        result = db.GETDB(query)
+    empresa = empresa.lower()
+    with lock_mutex:
+        state = generation_locks.get(empresa, {"is_busy": False, "timestamp": 0})
         
+        # Si está ocupado y no ha pasado el tiempo límite, rechazamos
+        if state["is_busy"] and (time.time() - state["timestamp"] < GEN_TIMEOUT):
+            return JSONResponse(status_code=429, content={
+                "error": "busy", 
+                "message": "Otro usuario está generando una cotización. Por favor espere unos segundos."
+            })
+        
+        # Marcamos como ocupado
+        generation_locks[empresa] = {"is_busy": True, "timestamp": time.time()}
+
+    try:
+        table_map = {"interlab": "interlab", "davana": "davana"}
+        table = table_map.get(empresa, "interlab")
+        
+        result = db.GETDB(f"SELECT MAX(id) as max_id FROM {table}")
+        next_id = 1
         if result and len(result) > 0 and result[0].get('max_id') is not None:
-            return {"folio": int(result[0]['max_id']) + 1}
-        else:
-            return {"folio": 1} # Empezar en 1 si no hay datos o tabla vacia
+            next_id = int(result[0]['max_id']) + 1
+        
+        return {"folio": next_id}
     except Exception as e:
-        return {"folio": 1, "error": str(e)}
+        # Si hay error obteniendo el folio, liberamos el bloqueo
+        with lock_mutex:
+            generation_locks[empresa] = {"is_busy": False, "timestamp": 0}
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 async def save_cotizacion(folio: int, file: UploadFile, empresa: str):
-    # Configuración por empresa
-    company_settings = {
-        "interlab": {"table": "interlab", "prefix": "InterlabCot"},
-        "davana": {"table": "davana", "prefix": "DavanaCot"}
-    }
-    
-    settings = company_settings.get(empresa.lower(), company_settings["interlab"])
-    table = settings["table"]
-    prefix = settings["prefix"]
-
-    # 1. Guardar en S3 (MinIO)
-    s3_endpoint = os.getenv("S3_ENDPOINT")
-    s3_client = boto3.client(
-        's3',
-        aws_access_key_id=os.getenv("S3_ACCESS_KEY"),
-        aws_secret_access_key=os.getenv("S3_SECRET_KEY"),
-        region_name=os.getenv("S3_REGION"),
-        endpoint_url=s3_endpoint,
-        verify=False
-    )
-    
-    bucket = os.getenv("S3_BUCKET")
-    file_name = f"cotizaciones/{prefix}_{folio}.pdf"
-    
+    empresa = empresa.lower()
     try:
-        file.file.seek(0) # Asegurar que estamos al inicio del archivo
+        # Configuración por empresa
+        company_settings = {
+            "interlab": {"table": "interlab", "prefix": "InterlabCot"},
+            "davana": {"table": "davana", "prefix": "DavanaCot"}
+        }
+        
+        settings = company_settings.get(empresa, company_settings["interlab"])
+        table = settings["table"]
+        prefix = settings["prefix"]
+
+        # 1. Guardar en S3 (MinIO)
+        s3_endpoint = os.getenv("S3_ENDPOINT")
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=os.getenv("S3_ACCESS_KEY"),
+            aws_secret_access_key=os.getenv("S3_SECRET_KEY"),
+            region_name=os.getenv("S3_REGION"),
+            endpoint_url=s3_endpoint,
+            verify=False
+        )
+        
+        bucket = os.getenv("S3_BUCKET")
+        file_name = f"cotizaciones/{prefix}_{folio}.pdf"
+        
+        file.file.seek(0)
         s3_client.upload_fileobj(file.file, bucket, file_name)
         
-        # Generar URL limpia para el endpoint custom
-        # Si el endpoint ya incluye el protocolo, lo usamos directamente
         base_url = s3_endpoint.rstrip('/')
         file_url = f"{base_url}/{bucket}/{file_name}"
         
@@ -76,3 +100,7 @@ async def save_cotizacion(folio: int, file: UploadFile, empresa: str):
             
     except Exception as e:
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+    finally:
+        # Siempre liberar el bloqueo al terminar (éxito o error)
+        with lock_mutex:
+            generation_locks[empresa] = {"is_busy": False, "timestamp": 0}

@@ -5,24 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cotización - Editor</title>
     <!-- Material Icons & Fonts -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined"
+      rel="stylesheet"
+    />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="/css/cotizaciones.css" />
-    <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet"/>
+    <link
+      href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/css/chat.css" />
   </head>
   <body>
     <div class="app-container">
+      <div id="sidebar-overlay" class="sidebar-overlay"></div>
       <!-- Sidebar -->
       <aside class="sidebar">
-        <a href="/panel" class="btn btn-secondary" style="justify-content: center; width: 100%; margin-bottom: 20px">
+        <a
+          href="/panel"
+          class="btn btn-secondary"
+          style="justify-content: center; width: 100%; margin-bottom: 20px"
+        >
           <span class="material-icons-outlined">dashboard</span>
           Inicio
         </a>
         <h2 class="sidebar-title">Empresa Emisora</h2>
 
-        <div class="company-card active" onclick="changeCompany('interlab')" id="card-interlab">
+        <div
+          class="company-card active"
+          onclick="changeCompany('interlab')"
+          id="card-interlab"
+        >
           <div class="company-icon">I</div>
           <div class="company-info">
             <h3>Interlab Digital</h3>
@@ -30,7 +45,11 @@
           </div>
         </div>
 
-        <div class="company-card" onclick="changeCompany('davana')" id="card-davana">
+        <div
+          class="company-card"
+          onclick="changeCompany('davana')"
+          id="card-davana"
+        >
           <div class="company-icon">D</div>
           <div class="company-info">
             <h3>Davana</h3>
@@ -44,6 +63,9 @@
         <!-- Topbar -->
         <header class="topbar">
           <div class="topbar-title">
+            <button id="sidebar-toggle" class="sidebar-toggle-btn">
+              <span class="material-icons-outlined">menu</span>
+            </button>
             <span class="material-icons-outlined">edit_document</span>
             <span id="editor-title">Editor Interlab</span>
           </div>
@@ -51,17 +73,17 @@
           <div class="topbar-actions">
             <a href="/tickets" class="link-btn">
               <span class="material-icons-outlined">help_outline</span>
-              Ayuda / Levantar Ticket
+              <span class="btn-text">Ayuda / Levantar Ticket</span>
             </a>
 
             <button class="btn btn-secondary" onclick="addNewRow()">
               <span class="material-icons-outlined">add</span>
-              Partida
+              <span class="btn-text">Partida</span>
             </button>
 
             <button class="btn btn-primary" onclick="generatePDF()">
               <span class="material-icons-outlined">picture_as_pdf</span>
-              Generar PDF
+              <span class="btn-text">Generar PDF</span>
             </button>
           </div>
         </header>

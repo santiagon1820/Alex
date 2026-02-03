@@ -2,6 +2,13 @@ const PAGE_H_PX = 1056;
 let CONTENT_START = 175; // Ahora dinámico
 let MARGIN_BOTTOM = 220; // Aumentado para más espacio al final de la página
 function getMaxH() {
+  // En móvil (editor), no paginamos para permitir una vista continua y fluida.
+  if (
+    window.innerWidth <= 768 &&
+    !document.body.classList.contains("printing")
+  ) {
+    return 999999;
+  }
   return PAGE_H_PX - CONTENT_START - MARGIN_BOTTOM;
 }
 let MAX_H = getMaxH();
@@ -32,7 +39,7 @@ function getFormattedDate() {
 let appData = {
   header: {
     fecha: getFormattedDate(),
-    numero: "Cargando...",
+    numero: "PENDIENTE",
     dependencia: "",
     asunto: "A quién corresponda",
   },
@@ -52,7 +59,6 @@ let renderTimeout;
 let savedFocusId = null;
 
 window.onload = function () {
-  fetchFolio();
   appData.rows.push(createNewRowObj());
   render();
   // Calcular letra inicial
@@ -85,16 +91,37 @@ const companyConfig = {
 let currentCompany = "interlab";
 
 async function fetchFolio() {
-  try {
-    const response = await fetch(
-      `/api/cotizaciones/folio?empresa=${currentCompany}`,
-    );
-    const data = await response.json();
-    appData.header.numero = data.folio;
-    render();
-  } catch (error) {
-    console.error("Error al obtener el folio:", error);
+  let attempts = 0;
+  const maxAttempts = 10;
+
+  while (attempts < maxAttempts) {
+    try {
+      const response = await fetch(
+        `/api/cotizaciones/folio?empresa=${currentCompany}`,
+      );
+
+      if (response.status === 429) {
+        // Servidor ocupado (lock activo), esperar y reintentar
+        console.warn("Servidor ocupado, reintentando folio...");
+        attempts++;
+        await new Promise((r) => setTimeout(r, 500));
+        continue;
+      }
+
+      if (!response.ok) throw new Error("Error en la respuesta del servidor");
+
+      const data = await response.json();
+      appData.header.numero = data.folio;
+      render();
+      return; // Éxito
+    } catch (error) {
+      console.error("Error al obtener el folio:", error);
+      if (attempts >= maxAttempts - 1) throw error;
+      attempts++;
+      await new Promise((r) => setTimeout(r, 500));
+    }
   }
+  throw new Error("No se pudo obtener el folio tras varios intentos");
 }
 
 function changeCompany(companyName) {
@@ -133,7 +160,7 @@ function changeCompany(companyName) {
     titleEl.textContent = `Editor ${name}`;
   }
 
-  fetchFolio();
+  render();
 }
 
 function createNewRowObj() {
@@ -448,9 +475,9 @@ function createRowTR(data, index) {
   const textColor = "#000"; // Siempre negro a solicitud del usuario
 
   tr.innerHTML = `
-                <td class="text-center font-bold" style="color:${textColor};">${index}</td>
-                <td><input type="number" id="cant_${data.id}" class="text-center font-bold" style="color:${textColor};" value="${data.cantidad}" oninput="updateRow('${data.id}', 'cantidad', this.value, this)"></td>
-                <td>
+                <td data-label="Pos" class="text-center" style="color:${textColor};">${index}</td>
+                <td data-label="Cant"><input type="number" id="cant_${data.id}" class="text-center" style="color:${textColor};" value="${data.cantidad}" oninput="updateRow('${data.id}', 'cantidad', this.value, this)"></td>
+                <td data-label="U.M.">
                     <select onchange="updateRow('${data.id}', 'um', this.value, this)" style="color:${textColor};">
                         <option value="PIEZA" ${data.um === "PZA" || data.um === "PIEZA" ? "selected" : ""}>PIEZA</option>
                         <option value="KG" ${data.um === "KG" ? "selected" : ""}>KG</option>
@@ -459,12 +486,12 @@ function createRowTR(data, index) {
                         <option value="JGO" ${data.um === "JGO" ? "selected" : ""}>JGO</option>
                     </select>
                 </td>
-                <td><input id="pn_${data.id}" value="${data.pn}" placeholder="P.N." oninput="updateRow('${data.id}', 'pn', this.value, this)" style="color:${textColor};"></td>
-                <td>
+                <td data-label="P.N."><input id="pn_${data.id}" value="${data.pn}" placeholder="P.N." oninput="updateRow('${data.id}', 'pn', this.value, this)" style="color:${textColor};"></td>
+                <td data-label="Descripción">
                     <textarea id="desc_${data.id}" placeholder="" oninput="updateRow('${data.id}', 'descripcion', this.value, this)" style="color:${textColor};">${data.descripcion}</textarea>
                 </td>
-                <td><div style="display:flex; align-items:center;"><span style="color:${textColor}; font-weight:bold;">$</span><input type="number" id="prec_${data.id}" class="text-right" style="color:${textColor}; font-weight:bold;" value="${data.precio}" oninput="updateRow('${data.id}', 'precio', this.value, this)"></div></td>
-                <td class="text-right font-bold" style="color:${textColor};" id="total_cell_${data.id}">${formatMoney(totalRow)}</td>
+                <td data-label="Precio"><div style="display:flex; align-items:center;"><span style="color:${textColor};">$</span><input type="number" id="prec_${data.id}" class="text-right" style="color:${textColor};" value="${data.precio}" oninput="updateRow('${data.id}', 'precio', this.value, this)"></div></td>
+                <td data-label="Total" class="text-right" style="color:${textColor};" id="total_cell_${data.id}">${formatMoney(totalRow)}</td>
                 <td class="text-center"><button class="delete-btn" onclick="deleteRow('${data.id}')">🗑</button></td>
             `;
   return tr;
@@ -482,28 +509,28 @@ function getHeaderHTML() {
                  
                  <table style="border:1px solid #9daab6;">
                     <tr>
-                        <td style="width:15%; background-color:#dfe3e6; font-weight:bold; border-color:#9daab6; color:#333;">Dependencia:</td>
-                        <td style="width:45%; border-color:#9daab6; font-weight:bold; color: #333; font-size:13px;">
-                            <input id="h_dependencia" value="${appData.header.dependencia}" placeholder="" style="font-weight:bold; color:#333;">
+                        <td style="width:15%; background-color:#dfe3e6; border-color:#9daab6; color:#333;">Dependencia:</td>
+                        <td style="width:45%; border-color:#9daab6; color: #333; font-size:13px;">
+                            <input id="h_dependencia" value="${appData.header.dependencia}" placeholder="" style="color:#333;">
                         </td>
-                        <td style="width:15%; background-color:#dfe3e6; font-weight:bold; border-color:#9daab6; color:#333;">Cotización</td>
+                        <td style="width:15%; background-color:#dfe3e6; border-color:#9daab6; color:#333;">Cotización</td>
                         <td style="width:25%; border-color:#9daab6; text-align:center;">
                              <input id="h_numero" class="text-center" value="${appData.header.numero}" readonly style="color:#333;">
                         </td>
                     </tr>
                     <tr>
-                         <td style="background-color:#dfe3e6; font-weight:bold; border-color:#9daab6; color:#333;">A quien<br>Corresponda:</td>
+                         <td style="background-color:#dfe3e6; border-color:#9daab6; color:#333;">A quien<br>Corresponda:</td>
                          <td style="border-color:#9daab6;">
                             <input id="h_asunto" value="${appData.header.asunto}" placeholder="Presente" style="color:#333;">
                          </td>
-                         <td style="background-color:#dfe3e6; font-weight:bold; border-color:#9daab6; color:#333;">Fecha</td>
-                         <td style="border-color:#9daab6; text-align:center; color:#333; font-weight:bold;">
-                            <input id="h_fecha" value="${appData.header.fecha}" style="color:#333; text-align:center; font-weight:bold;">
+                         <td style="background-color:#dfe3e6; border-color:#9daab6; color:#333;">Fecha</td>
+                         <td style="border-color:#9daab6; text-align:center; color:#333;">
+                            <input id="h_fecha" value="${appData.header.fecha}" style="color:#333; text-align:center;">
                          </td>
                     </tr>
                  </table>
                  
-                 <div style="text-align:center; font-style:italic; font-size:10px; margin-top:10px; color:#666;">
+                 <div style="text-align:center; font-style:italic; font-size:10px; margin-top:10px; color:#333; border:1px solid #9daab6; padding:5px; background-color:transparent;">
                     Por medio del presente, hacemos llegar la cotización que fue solicitada:
                  </div>
             </div>
@@ -516,17 +543,17 @@ function getHeaderHTML() {
                     <table><tr><td class="bg-blue text-center font-bold">${config.nombre}</td></tr></table>
                     <table style="margin-top: 5px;">
                         <tr>
-                            <td class="bg-blue font-bold" style="width:10%">Fecha:</td>
+                            <td class="bg-blue" style="width:10%">Fecha:</td>
                             <td style="width:30%"><input id="h_fecha" value="${appData.header.fecha}"></td>
-                            <td class="bg-blue font-bold" style="width:10%">No.</td>
+                            <td class="bg-blue" style="width:10%">No.</td>
                             <td style="width:20%"><input id="h_numero" class="text-center" value="${appData.header.numero}" readonly></td>
-                            <td class="bg-blue font-bold" style="width:10%">RUPC</td>
+                            <td class="bg-blue" style="width:10%">RUPC</td>
                             <td class="text-center" style="width:20%">${config.rupc}</td>
                         </tr>
                     </table>
                     <table style="margin-top: 5px;">
-                        <tr><td style="width:20%" class="font-bold">DEPENDENCIA:</td><td><input id="h_dependencia" value="${appData.header.dependencia}"></td></tr>
-                        <tr><td class="font-bold">ASUNTO:</td><td><input id="h_asunto" value="${appData.header.asunto}"></td></tr>
+                        <tr><td style="width:20%">DEPENDENCIA:</td><td><input id="h_dependencia" value="${appData.header.dependencia}"></td></tr>
+                        <tr><td>ASUNTO:</td><td><input id="h_asunto" value="${appData.header.asunto}"></td></tr>
                     </table>
                     <table style="margin-top: 5px;">
                         <tr><td style="font-size:11px; padding: 5px;">POR MEDIO DEL PRESENTE SE HACE LLEGAR LA COTIZACIÓN SOLICITADA.</td></tr>
@@ -536,12 +563,17 @@ function getHeaderHTML() {
 }
 
 function getTotalesHTML(sub, iva, total) {
+  const mnRow =
+    currentCompany === "davana"
+      ? `<tr><td style="border:none;"></td><td class="text-center bg-blue" style="font-weight:bold; font-size:10px;">M.N</td></tr>`
+      : "";
   return `
                 <div style="overflow:auto;">
                     <table class="table-totales">
-                        <tr><td class="font-bold">SUBTOTAL:</td><td class="text-right display-subtotal">${formatMoney(sub)}</td></tr>
-                        <tr><td class="font-bold">IVA:</td><td class="text-right display-iva">${formatMoney(iva)}</td></tr>
+                        <tr><td>SUBTOTAL:</td><td class="text-right display-subtotal">${formatMoney(sub)}</td></tr>
+                        <tr><td>IVA:</td><td class="text-right display-iva">${formatMoney(iva)}</td></tr>
                         <tr><td class="font-bold bg-blue">TOTAL:</td><td class="text-right bg-blue font-bold display-total">${formatMoney(total)}</td></tr>
+                        ${mnRow}
                     </table>
                 </div>
             `;
@@ -549,12 +581,12 @@ function getTotalesHTML(sub, iva, total) {
 
 function getLetraHTML() {
   if (currentCompany === "davana") {
-    return `<div style="background-color:#dfe3e6; padding:5px; text-align:center; font-weight:bold; font-size:10px; border:1px solid #9daab6; margin-top:10px;">
-             <input id="f_letra" value="${appData.footer.cantidadLetra}" readonly style="text-align:center; font-weight:bold;">
+    return `<div style="background-color:#dfe3e6; padding:5px; text-align:center; font-size:10px; border:1px solid #9daab6; margin-top:10px;">
+             <input id="f_letra" value="${appData.footer.cantidadLetra}" readonly style="text-align:center;">
             </div>`;
   }
   return `<table>
-                <tr><td class="text-center font-bold bg-blue">CANTIDAD CON LETRA</td></tr>
+                <tr><td class="text-center bg-blue">CANTIDAD CON LETRA</td></tr>
                 <tr><td><input id="f_letra" value="${appData.footer.cantidadLetra}" readonly></td></tr>
             </table>`;
 }
@@ -566,14 +598,16 @@ function getCondicionesHTML() {
     return `
         <!-- RFC Bar -->
         <div style="text-align:center; font-size:10px; font-weight:bold; margin-top:5px; margin-bottom:10px; color:#333; border:1px solid #9daab6; padding:3px; background-color:#dfe3e6;">
-           RFC: ${config.rfc} | RUPC: ${config.rupc} | DAVANA MEXICO S DE RL DE CV
+           RFC: ${config.rfc}<br>
+           RUPC: ${config.rupc}<br>
+           DAVANA MEXICO S DE RL DE CV
         </div>
 
         <table style="margin-top:0px; border:1px solid #9daab6;">
              <tr>
                <td style="width:25%; background-color:#fff; border-color:#9daab6;">Tiempo de entrega:</td>
                <td style="text-align:center; border-color:#9daab6;">
-                  <input value="15 días hábiles" style="color:#000; font-weight:bold; text-align:center;">
+                  <input value="15 días hábiles" style="color:#000; text-align:center;">
                </td>
              </tr>
              <tr>
@@ -591,13 +625,13 @@ function getCondicionesHTML() {
              <tr>
                <td style="width:25%; background-color:#fff; border-color:#9daab6;">Garantía:</td>
                <td style="text-align:center; border-color:#9daab6;">
-                  <input value="3 años" style="color:#000; font-weight:bold; text-align:center;">
+                  <input value="3 años" style="color:#000; text-align:center;">
                </td>
              </tr>
         </table>`;
   }
   return `<table>
-                <tr><td class="text-center font-bold bg-blue">CONDICIONES DE PAGO</td></tr>
+                <tr><td class="text-center bg-blue">CONDICIONES DE PAGO</td></tr>
                 <tr><td>
                     <textarea id="f_condiciones" oninput="updateFooter('condiciones', this.value, this)">${appData.footer.condiciones}</textarea>
                 </td></tr>
@@ -609,7 +643,7 @@ function getDatosEmpresaHTML() {
   if (currentCompany === "davana") {
     return ``; // Empty because it's now integrated above
   }
-  return `<table><tr><td class="text-center font-bold bg-blue">DATOS DE EMPRESA</td></tr><tr><td class="text-left"><strong>RFC:</strong> ${config.rfc}</td></tr></table>`;
+  return `<table><tr><td class="text-center bg-blue">DATOS DE EMPRESA</td></tr><tr><td class="text-left">RFC: ${config.rfc}</td></tr></table>`;
 }
 function getFirmaHTML() {
   const config = companyConfig[currentCompany];
@@ -618,17 +652,17 @@ function getFirmaHTML() {
 
   if (currentCompany === "davana") {
     return `<div style="text-align:center; margin-top:40px;">
-                <div style="font-size:9px; font-weight:bold; color:#666; margin-bottom:10px;">ATENTAMENTE</div>
+                <div style="font-size:9px; color:#666; margin-bottom:10px;">ATENTAMENTE</div>
                 <div style="height: 100px; display:flex; align-items:flex-end; justify-content:center;">
                     <img src="${imgUrl}" class="img-firma" style="max-height:100px;">
                 </div>
                 <div style="width:200px; border-top:1px solid #999; margin:5px auto;"></div>
-                <div style="font-size:10px; font-weight:bold;">${config.firma}</div>
+                <div style="font-size:10px;">${config.firma}</div>
                 <div style="font-size:9px;">Apoderado Legal</div>
-                <div style="background-color:#dfe3e6; color:#333; font-weight:bold; font-size:9px; padding:5px; width:220px; margin:10px auto; border:1px solid #ccc;">DAVANA MEXICO S DE RL DE CV</div>
+                <div style="background-color:#dfe3e6; color:#333; font-size:9px; padding:5px; width:220px; margin:10px auto; border:1px solid #ccc;">DAVANA MEXICO S DE RL DE CV</div>
              </div>`;
   }
-  return `<table><tr><td class="text-center font-bold bg-blue">ATENTAMENTE</td></tr><tr><td class="text-center" style="height: 100px; vertical-align: bottom;"><img src="${imgUrl}" class="img-firma"><div class="firma-linea"></div><strong>${config.firma}</strong><br>VENTAS</td></tr></table>`;
+  return `<table><tr><td class="text-center bg-blue">ATENTAMENTE</td></tr><tr><td class="text-center" style="height: 100px; vertical-align: bottom;"><img src="${imgUrl}" class="img-firma"><div class="firma-linea"></div>${config.firma}<br>VENTAS</td></tr></table>`;
 }
 
 function appendHTML(parent, html) {
@@ -653,7 +687,24 @@ function restoreHeaderEvents(el) {
 
 function restoreFooterEvents(el) {}
 
-function generatePDF() {
+async function generatePDF() {
+  // 0. Obtener el folio real justo antes de generar
+  Swal.fire({
+    title: "Asignando Folio...",
+    text: "Por favor espere",
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    },
+  });
+
+  try {
+    await fetchFolio();
+  } catch (error) {
+    Swal.fire("Error", "No se pudo obtener el folio", "error");
+    return;
+  }
+
   const opt = {
     margin: 0,
     filename: `${companyConfig[currentCompany].prefix}_${appData.header.numero}.pdf`,
@@ -662,6 +713,10 @@ function generatePDF() {
     jsPDF: { unit: "px", format: [816, 1056], orientation: "portrait" },
   };
   document.body.classList.add("printing");
+  // En móvil, forzamos re-render para pasar de "vista continua" a "paginación fija"
+  MAX_H = getMaxH();
+  render();
+
   const btns = document.querySelectorAll(".delete-btn");
   btns.forEach((b) => (b.style.display = "none"));
 
@@ -758,6 +813,9 @@ function generatePDF() {
       });
 
       document.body.classList.remove("printing");
+      // Restaurar vista continua si estamos en móvil
+      MAX_H = getMaxH();
+      render();
     });
 }
 
@@ -938,3 +996,33 @@ function numeroALetras(num) {
 
   return data + moneda + centavosStr;
 }
+
+// --- Responsive Sidebar Toggle ---
+document.addEventListener("DOMContentLoaded", () => {
+  const toggleBtn = document.getElementById("sidebar-toggle");
+  const sidebar = document.querySelector(".sidebar");
+  const overlay = document.getElementById("sidebar-overlay");
+
+  if (toggleBtn && sidebar && overlay) {
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("open");
+      overlay.classList.toggle("active");
+    });
+
+    overlay.addEventListener("click", () => {
+      sidebar.classList.remove("open");
+      overlay.classList.remove("active");
+    });
+
+    // Close sidebar when a company is selected on mobile
+    const companyCards = document.querySelectorAll(".company-card");
+    companyCards.forEach((card) => {
+      card.addEventListener("click", () => {
+        if (window.innerWidth <= 768) {
+          sidebar.classList.remove("open");
+          overlay.classList.remove("active");
+        }
+      });
+    });
+  }
+});
