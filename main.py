@@ -236,3 +236,24 @@ async def save_cotizacion(
     if not is_logged_in:
         return JSONResponse(status_code=401, content={"detail": "No autorizado"})
     return await CotizacionesController.save_cotizacion(folio, file, empresa)
+
+@app.get(
+    "/api/cotizaciones/product_details",
+    tags=["Cotizaciones"],
+    summary="Obtener detalles del producto por PN",
+)
+def get_product_details(pn: str, empresa: str, is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    if not is_logged_in:
+        return JSONResponse(status_code=401, content={"detail": "No autorizado"})
+    return CotizacionesController.get_product_details(pn, empresa)
+
+@app.get(
+    "/api/cotizaciones/pns",
+    tags=["Cotizaciones"],
+    summary="Obtener todos los PNs por empresa",
+)
+def get_pns(empresa: str, is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    if not is_logged_in:
+        return JSONResponse(status_code=401, content={"detail": "No autorizado"})
+    return CotizacionesController.get_all_pns(empresa)
+

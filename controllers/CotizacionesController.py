@@ -1,6 +1,7 @@
 import models.db as db
 import os
 import boto3
+import json
 from botocore.exceptions import NoCredentialsError
 from fastapi import UploadFile, File, Form
 from fastapi.responses import JSONResponse
@@ -104,3 +105,54 @@ async def save_cotizacion(folio: int, file: UploadFile, empresa: str):
         # Siempre liberar el bloqueo al terminar (éxito o error)
         with lock_mutex:
             generation_locks[empresa] = {"is_busy": False, "timestamp": 0}
+
+def get_product_details(pn: str, empresa: str):
+    empresa = empresa.lower()
+    table = f"{empresa}Products"
+    
+    query = f"SELECT description1, description2, description3, price, UM FROM {table} WHERE pn = %s"
+    result = db.GETDB(query, (pn,))
+    
+    if result and len(result) > 0:
+        row = result[0]
+        # Agrupar descripciones en una lista
+        descriptions = [row['description1'], row['description2'], row['description3']]
+        # Filtrar descripciones vacías o None si se prefiere, pero el usuario pidió "el listado de 3"
+        
+        # Procesar UM si viene como string JSON
+        um_list = []
+        if row['UM']:
+            try:
+                um_data = row['UM']
+                # Si es string, lo parseamos
+                if isinstance(um_data, str):
+                    um_data = json.loads(um_data)
+                
+                # Una vez que estamos seguros de que es un dict, extraemos la lista
+                if isinstance(um_data, dict):
+                    um_list = um_data.get("UM", [])
+                elif isinstance(um_data, list):
+                    um_list = um_data
+            except Exception as e:
+                print(f"Error parsing UM JSON: {e}")
+
+        
+        return {
+            "descriptions": descriptions,
+            "price": row['price'],
+            "um": um_list
+        }
+    return JSONResponse(status_code=404, content={"message": "Producto no encontrado"})
+
+
+def get_all_pns(empresa: str):
+    empresa = empresa.lower()
+    table = f"{empresa}Products"
+    
+    query = f"SELECT pn FROM {table}"
+    result = db.GETDB(query)
+    
+    if result is not None:
+        pns = [row['pn'] for row in result]
+        return {"pns": pns}
+    return JSONResponse(status_code=500, content={"message": "Error al obtener PNs"})

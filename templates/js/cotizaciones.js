@@ -16,6 +16,14 @@ let MAX_H = getMaxH();
 const LIMIT_LINES = 10;
 const LIMIT_CHARS = 400;
 
+function formatCommas(val) {
+  if (val === null || val === undefined || val === "") return "";
+  let str = val.toString().replace(/,/g, "");
+  let parts = str.split(".");
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return parts.join(".");
+}
+
 // --- FUNCIÓN PARA FORMATO DE FECHA (ej: 30 de Enero del 2026) ---
 function getFormattedDate() {
   const months = [
@@ -59,11 +67,38 @@ let renderTimeout;
 let savedFocusId = null;
 
 window.onload = function () {
-  appData.rows.push(createNewRowObj());
-  render();
-  // Calcular letra inicial
-  updateVisualsOnly(appData.rows[0].id);
+  loadSession();
+  // Cargar PNs iniciales
+  fetchPNs();
 };
+
+function saveSession() {
+  const key = `cotizacion_data_${currentCompany}`;
+  sessionStorage.setItem(key, JSON.stringify(appData));
+}
+
+function loadSession() {
+  const key = `cotizacion_data_${currentCompany}`;
+  const saved = sessionStorage.getItem(key);
+  if (saved) {
+    appData = JSON.parse(saved);
+    render();
+    if (appData.rows.length > 0) updateVisualsOnly(appData.rows[0].id);
+  } else {
+    // Estado inicial si no hay nada guardado
+    appData.rows = [createNewRowObj()];
+    appData.header.numero = "PENDIENTE";
+    appData.header.dependencia = "";
+    appData.header.asunto = "A quién corresponda";
+    render();
+    if (appData.rows.length > 0) updateVisualsOnly(appData.rows[0].id);
+  }
+}
+
+function clearSession() {
+  const key = `cotizacion_data_${currentCompany}`;
+  sessionStorage.removeItem(key);
+}
 
 const companyConfig = {
   interlab: {
@@ -89,6 +124,7 @@ const companyConfig = {
 };
 
 let currentCompany = "interlab";
+let globalPNs = []; // Almacenar todos los PNs de la empresa actual
 
 async function fetchFolio() {
   let attempts = 0;
@@ -122,6 +158,71 @@ async function fetchFolio() {
     }
   }
   throw new Error("No se pudo obtener el folio tras varios intentos");
+}
+
+async function fetchPNs() {
+  try {
+    const response = await fetch(
+      `/api/cotizaciones/pns?empresa=${currentCompany}`,
+    );
+    if (!response.ok) throw new Error("Error al obtener PNs");
+    const data = await response.json();
+    globalPNs = data.pns || [];
+
+    const list = document.getElementById("pn-list");
+    if (list) {
+      list.innerHTML = globalPNs.map((pn) => `<option value="${pn}">`).join("");
+    }
+    // Re-render para que los selects de PN se actualicen si ya hay filas
+    render();
+  } catch (error) {
+    console.error("Error fetching PNs:", error);
+  }
+}
+
+async function handlePNChange(rowId, pn) {
+  const row = appData.rows.find((r) => r.id === rowId);
+  if (!row) return;
+
+  if (!pn || pn.trim() === "") {
+    // Si limpian el PN, borrar los datos de esa fila
+    row.pn = "";
+    row.descripcion = "";
+    row.precio = 0;
+    row.um = "";
+    row.desc_options = [];
+    row.um_options = [];
+    render();
+    updateVisualsOnly(rowId);
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `/api/cotizaciones/product_details?pn=${encodeURIComponent(pn)}&empresa=${currentCompany}`,
+    );
+    if (response.ok) {
+      const details = await response.json();
+      if (row) {
+        row.desc_options = details.descriptions.filter(
+          (d) => d && d.trim() !== "",
+        );
+        row.um_options = details.um && details.um.length > 0 ? details.um : [];
+
+        // Por defecto, usar la primera descripción y la primera UM
+        row.descripcion =
+          row.desc_options.length > 0 ? row.desc_options[0] : "";
+        row.um = row.um_options.length > 0 ? row.um_options[0] : "";
+        row.precio = details.price;
+
+        // Actualizar UI
+        render();
+        updateVisualsOnly(rowId);
+      }
+    }
+  } catch (error) {
+    console.error("Error al obtener detalles del producto:", error);
+  }
 }
 
 function changeCompany(companyName) {
@@ -160,6 +261,8 @@ function changeCompany(companyName) {
     titleEl.textContent = `Editor ${name}`;
   }
 
+  loadSession(); // Cargar progreso específico de la empresa
+  fetchPNs(); // Recargar PNs para la nueva empresa
   render();
 }
 
@@ -169,8 +272,10 @@ function createNewRowObj() {
     pn: "",
     descripcion: "",
     cantidad: 1,
-    um: "PZA",
+    um: "",
     precio: 0,
+    um_options: [],
+    desc_options: [],
   };
 }
 
@@ -212,6 +317,31 @@ function sanitizeInput(text) {
   return text;
 }
 
+function handlePriceInput(id, element) {
+  // Guardar posición del cursor
+  let cursor = element.selectionStart;
+  let oldLen = element.value.length;
+
+  let val = element.value;
+  // Solo permitir números, puntos y comas (que luego limpiaremos)
+  let cleanVal = val.replace(/[^0-9.,]/g, "");
+
+  // Limpiar para el estado (quitar comas)
+  let rawVal = cleanVal.replace(/,/g, "");
+
+  // Formatear para el input
+  let formatted = formatCommas(rawVal);
+  element.value = formatted;
+
+  // Restaurar posición del cursor ajustada
+  let newLen = element.value.length;
+  let newPos = cursor + (newLen - oldLen);
+  element.setSelectionRange(newPos, newPos);
+
+  // Actualizar el estado con el valor numérico
+  updateRow(id, "precio", rawVal, element);
+}
+
 function updateRow(id, field, val, element) {
   const row = appData.rows.find((r) => r.id === id);
   if (row) {
@@ -223,7 +353,21 @@ function updateRow(id, field, val, element) {
       }
     }
 
+    // Convertir a número si es precio o cantidad
+    if (field === "precio") {
+      val = parseFloat(val.toString().replace(/,/g, "")) || 0;
+    } else if (field === "cantidad") {
+      val = parseFloat(val) || 0;
+    }
+
     row[field] = val;
+
+    if (field === "pn") {
+      // Disparamos la carga de datos (limpieza automática si es vacío)
+      handlePNChange(id, val);
+      saveSession();
+      return;
+    }
 
     if (field === "descripcion") {
       if (element) {
@@ -233,6 +377,7 @@ function updateRow(id, field, val, element) {
         const pageContent = element.closest(".page-content");
         if (pageContent && pageContent.scrollHeight > MAX_H) {
           render();
+          saveSession();
           return;
         }
       }
@@ -240,6 +385,7 @@ function updateRow(id, field, val, element) {
     } else if (field === "cantidad" || field === "precio") {
       updateVisualsOnly(id);
     }
+    saveSession();
   }
 }
 
@@ -277,10 +423,12 @@ function updateVisualsOnly(rowId) {
   if (inputLetra) {
     inputLetra.value = textoLetra;
   }
+  saveSession();
 }
 
 function updateHeader(field, val) {
   appData.header[field] = val;
+  saveSession();
 }
 
 function updateFooter(field, val, element) {
@@ -300,10 +448,12 @@ function updateFooter(field, val, element) {
     const pageContent = element.closest(".page-content");
     if (pageContent && pageContent.scrollHeight > MAX_H) {
       render();
+      saveSession();
       return;
     }
     scheduleRender();
   }
+  saveSession();
 }
 
 function scheduleRender(delay = 500) {
@@ -478,21 +628,49 @@ function createRowTR(data, index) {
                 <td data-label="Pos" class="text-center" style="color:${textColor};">${index}</td>
                 <td data-label="Cant"><input type="number" id="cant_${data.id}" class="text-center" style="color:${textColor};" value="${data.cantidad}" oninput="updateRow('${data.id}', 'cantidad', this.value, this)"></td>
                 <td data-label="U.M.">
-                    <select onchange="updateRow('${data.id}', 'um', this.value, this)" style="color:${textColor};">
-                        <option value="PIEZA" ${data.um === "PZA" || data.um === "PIEZA" ? "selected" : ""}>PIEZA</option>
-                        <option value="KG" ${data.um === "KG" ? "selected" : ""}>KG</option>
-                        <option value="LT" ${data.um === "LT" ? "selected" : ""}>LT</option>
-                        <option value="SRV" ${data.um === "SRV" ? "selected" : ""}>SRV</option>
-                        <option value="JGO" ${data.um === "JGO" ? "selected" : ""}>JGO</option>
+                    <select class="no-print-select" onchange="updateRow('${data.id}', 'um', this.value, this)" style="color:${textColor}; text-align:center; appearance: none; -webkit-appearance: none; background: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22m6 9 6 6 6-6%22/></svg>') no-repeat right 5px center; padding-right: 20px;">
+                        ${(data.um_options || [])
+                          .map(
+                            (opt) =>
+                              `<option value="${opt}" ${data.um === opt ? "selected" : ""}>${opt}</option>`,
+                          )
+                          .join("")}
                     </select>
+                    <div class="print-only" style="display:none; color:${textColor}; text-align:center;">${data.um}</div>
                 </td>
-                <td data-label="P.N."><input id="pn_${data.id}" value="${data.pn}" placeholder="P.N." oninput="updateRow('${data.id}', 'pn', this.value, this)" style="color:${textColor};"></td>
-                <td data-label="Descripción">
-                    <textarea id="desc_${data.id}" placeholder="" oninput="updateRow('${data.id}', 'descripcion', this.value, this)" style="color:${textColor};">${data.descripcion}</textarea>
+
+                <td data-label="P.N.">
+                    <input list="pn-list" value="${data.pn}" placeholder="" oninput="updateRow('${data.id}', 'pn', this.value, this)" style="color:${textColor};">
+                    <div class="print-only" style="display:none; color:${textColor};">${data.pn}</div>
                 </td>
-                <td data-label="Precio"><div style="display:flex; align-items:center;"><span style="color:${textColor};">$</span><input type="number" id="prec_${data.id}" class="text-right" style="color:${textColor};" value="${data.precio}" oninput="updateRow('${data.id}', 'precio', this.value, this)"></div></td>
+
+
+                <td data-label="Descripción" class="desc-cell" style="position:relative;">
+                    ${
+                      data.desc_options && data.desc_options.length > 1
+                        ? `
+                        <div class="desc-variants-toggle no-print" style="position:absolute; top:2px; right:2px;">
+                           <select onchange="updateRow('${data.id}', 'descripcion', this.value, document.getElementById('desc_${data.id}')); render();" style="width:20px; height:20px; opacity:0; cursor:pointer; position:absolute; z-index:2;">
+                               <option value="">-- Variantes --</option>
+                               ${data.desc_options.map((d) => `<option value="${d.replace(/"/g, "&quot;")}" ${data.descripcion === d ? "selected" : ""}>${d.substring(0, 50)}...</option>`).join("")}
+                           </select>
+                           <span class="material-icons-outlined" style="font-size:16px; color:#666; cursor:pointer;">expand_more</span>
+                        </div>
+                    `
+                        : ""
+                    }
+                    <textarea 
+                        id="desc_${data.id}" 
+                        placeholder="" 
+                        oninput="updateRow('${data.id}', 'descripcion', this.value, this)" 
+                        style="color:${textColor}; width:100%; display:block;"
+                    >${data.descripcion}</textarea>
+                </td>
+                <td data-label="Precio"><div style="display:flex; align-items:center;"><span style="color:${textColor};">$</span><input type="text" id="prec_${data.id}" class="text-right" style="color:${textColor};" value="${formatCommas(data.precio)}" oninput="handlePriceInput('${data.id}', this)"></div></td>
+
                 <td data-label="Total" class="text-right" style="color:${textColor};" id="total_cell_${data.id}">${formatMoney(totalRow)}</td>
                 <td class="text-center"><button class="delete-btn" onclick="deleteRow('${data.id}')">🗑</button></td>
+
             `;
   return tr;
 }
@@ -720,7 +898,21 @@ async function generatePDF() {
   const btns = document.querySelectorAll(".delete-btn");
   btns.forEach((b) => (b.style.display = "none"));
 
+  // Ocultar elementos para el PDF
+  const noPrint = document.querySelectorAll(".no-print");
+  noPrint.forEach((el) => (el.style.display = "none"));
+
+  const noPrintSelects = document.querySelectorAll(".no-print-select");
+  noPrintSelects.forEach((s) => (s.style.display = "none"));
+
+  const allTextareas = document.querySelectorAll("#pdf-container textarea");
+  allTextareas.forEach((t) => (t.style.display = "none"));
+
+  const printOnlyDivs = document.querySelectorAll(".print-only");
+  printOnlyDivs.forEach((d) => (d.style.display = "block"));
+
   // Ocultar col SKU (4) y col X (8)
+
   const colsToHide = document.querySelectorAll(
     ".table-cotizacion tr > td:nth-child(4), .table-cotizacion tr > td:nth-child(8)",
   );
@@ -789,6 +981,11 @@ async function generatePDF() {
         cancelButtonText: "Cerrar",
         allowOutsideClick: false,
       }).then((result) => {
+        // En ambos casos (Descargar o Cerrar), limpiamos la sesión de esta empresa
+        clearSession();
+        // Recargar con estado vacío
+        loadSession();
+
         if (result.isConfirmed) {
           const url = URL.createObjectURL(blob);
           const link = document.createElement("a");
@@ -796,9 +993,6 @@ async function generatePDF() {
           link.download = opt.filename;
           link.click();
           URL.revokeObjectURL(url);
-          window.location.href = "/panel";
-        } else if (result.dismiss === Swal.DismissReason.cancel) {
-          window.location.href = "/panel";
         }
       });
 
@@ -806,7 +1000,11 @@ async function generatePDF() {
       btns.forEach((b) => (b.style.display = "inline-block"));
       colsToHide.forEach((c) => (c.style.display = ""));
 
-      // Restaurar textareas
+      // Restaurar selects y textareas
+      noPrint.forEach((el) => (el.style.display = ""));
+      noPrintSelects.forEach((s) => (s.style.display = ""));
+      printOnlyDivs.forEach((d) => (d.style.display = "none"));
+
       replacements.forEach((rep) => {
         rep.div.remove();
         rep.ta.style.display = "";
