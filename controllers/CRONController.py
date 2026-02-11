@@ -11,7 +11,7 @@ def endDay(adminPassword):
         return JSONResponse(
             status_code=400,
             content={
-                "Error": "Credenciales incorrectas"
+                "Error": "Contraseña de administrador incorrecta"
             }
         )
     try:

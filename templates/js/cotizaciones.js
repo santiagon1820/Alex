@@ -163,7 +163,7 @@ async function fetchFolio() {
 async function fetchPNs() {
   try {
     const response = await fetch(
-      `/api/cotizaciones/pns?empresa=${currentCompany}`,
+      `/api/cotizaciones/pns`,
     );
     if (!response.ok) throw new Error("Error al obtener PNs");
     const data = await response.json();
@@ -199,7 +199,7 @@ async function handlePNChange(rowId, pn) {
 
   try {
     const response = await fetch(
-      `/api/cotizaciones/product_details?pn=${encodeURIComponent(pn)}&empresa=${currentCompany}`,
+      `/api/cotizaciones/getPN?pn=${encodeURIComponent(pn)}`,
     );
     if (response.ok) {
       const details = await response.json();

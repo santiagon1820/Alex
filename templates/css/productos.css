@@ -1,0 +1,41 @@
+body {
+  font-family: "Inter", sans-serif;
+}
+.material-symbols-outlined {
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+}
+.sidebar-item.active {
+  background-color: rgba(19, 91, 236, 0.1);
+  color: #135bec;
+  border-right: 4px solid #135bec;
+}
+.table-row:hover {
+  background-color: #f9fafb;
+  transition: background-color 0.2s;
+}
+.description-dropdown:focus-within .dropdown-menu {
+  display: block;
+}
+.dropdown-menu {
+  display: none;
+}
+
+/* Custom styles for MGLAB */
+.bg-primary {
+  background-color: #135bec;
+}
+.text-primary {
+  color: #135bec;
+}
+.border-primary {
+  border-color: #135bec;
+}
+.shadow-primary\/20 {
+  box-shadow:
+    0 4px 6px -1px rgba(19, 91, 236, 0.2),
+    0 2px 4px -1px rgba(19, 91, 236, 0.06);
+}
