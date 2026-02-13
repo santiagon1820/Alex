@@ -393,4 +393,3 @@ def update_category(data: schemasPayload.Category):
 )
 def delete_category(id_category: int):
     return ProductsController.delete_category(id_category)
-

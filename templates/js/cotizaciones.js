@@ -44,6 +44,13 @@ function getFormattedDate() {
   return `${d.getDate()} de ${months[d.getMonth()]} del ${d.getFullYear()}`;
 }
 
+const DEFAULT_CONDICIONES = `• CONDICION DE PAGO: 30  Días hábiles
+• VIGENCIA DE COTIZACION: 60 Días naturales
+• GARANTIA:
+• TIEMPO DE ENTREGA:
+• COTIZACION EXPRESADA EN MONEDA NACIONAL
+• ORIGEN DEL BIEN: EXTRANJERO`;
+
 let appData = {
   header: {
     fecha: getFormattedDate(),
@@ -54,12 +61,7 @@ let appData = {
   rows: [],
   footer: {
     cantidadLetra: "",
-    condiciones: `• CONDICION DE PAGO: 30  Días hábiles
-• VIGENCIA DE COTIZACION: 60 Días naturales
-• GARANTIA:
-• TIEMPO DE ENTREGA:
-• COTIZACION EXPRESADA EN MONEDA NACIONAL
-• ORIGEN DEL BIEN: EXTRANJERO`,
+    condiciones: DEFAULT_CONDICIONES,
   },
 };
 
@@ -90,6 +92,9 @@ function loadSession() {
     appData.header.numero = "PENDIENTE";
     appData.header.dependencia = "";
     appData.header.asunto = "A quién corresponda";
+    // Resetear footer al valor por defecto
+    appData.footer.condiciones = DEFAULT_CONDICIONES;
+    appData.footer.cantidadLetra = "";
     render();
     if (appData.rows.length > 0) updateVisualsOnly(appData.rows[0].id);
   }
@@ -537,7 +542,7 @@ function render() {
       // Headers deben ser iguales para ambas empresas según solicitud
       tableStruct.innerHTML = `<thead><tr>
                         <td style="width:5%">Partida</td><td style="width:8%">Cantidad</td><td style="width:10%">U.M</td>
-                        <td style="width:11%">P.N.</td><td style="width:36%">Descripción</td>
+                        <td style="width:11%">P.N./Código</td><td style="width:36%">Descripción</td>
                         <td style="width:10%">Precio U.</td>
                         <td style="width:15%">Total</td><td style="width:5%">X</td>
                     </tr></thead><tbody></tbody>`;
@@ -639,7 +644,7 @@ function createRowTR(data, index) {
                     <div class="print-only" style="display:none; color:${textColor}; text-align:center;">${data.um}</div>
                 </td>
 
-                <td data-label="P.N.">
+                <td data-label="P.N./Código">
                     <input list="pn-list" value="${data.pn}" placeholder="" oninput="updateRow('${data.id}', 'pn', this.value, this)" style="color:${textColor};">
                     <div class="print-only" style="display:none; color:${textColor};">${data.pn}</div>
                 </td>
