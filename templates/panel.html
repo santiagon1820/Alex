@@ -80,6 +80,7 @@
           <a
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             href="/panel/seguimiento"
+            style="display: none"
           >
             <span class="material-symbols-outlined text-[20px] text-gray-500">analytics</span>
             <span class="text-sm font-medium">Seguimiento</span>
@@ -87,6 +88,7 @@
           <a
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             href="/panel/cotizaciones"
+            style="display: none"
           >
             <span class="material-symbols-outlined text-[20px] text-gray-500"
               >request_quote</span
@@ -96,6 +98,7 @@
           <a
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             href="#"
+            style="display: none"
           >
             <span class="material-symbols-outlined text-[20px] text-gray-500"
               >shopping_cart</span
@@ -105,6 +108,7 @@
           <a
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             href="#"
+            style="display: none"
           >
             <span class="material-symbols-outlined text-[20px] text-gray-500"
               >track_changes</span
@@ -114,6 +118,7 @@
           <a
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             href="#"
+            style="display: none"
           >
             <span class="material-symbols-outlined text-[20px] text-gray-500"
               >description</span
@@ -123,6 +128,7 @@
           <a
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             href="#"
+            style="display: none"
           >
             <span class="material-symbols-outlined text-[20px] text-gray-500"
               >verified_user</span
@@ -132,6 +138,7 @@
           <a
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             href="/panel/productos"
+            style="display: none"
           >
             <span class="material-symbols-outlined text-[20px] text-gray-500"
               >inventory_2</span
@@ -141,6 +148,7 @@
           <a
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             href="#"
+            style="display: none"
           >
             <span class="material-symbols-outlined text-[20px] text-gray-500"
               >menu_book</span
@@ -161,6 +169,7 @@
           <a
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mt-1"
             href="#"
+            style="display: none"
           >
             <span class="material-symbols-outlined text-[20px] text-gray-500"
               >settings</span
@@ -445,6 +454,37 @@
       </div>
     </main>
     <script>
+      async function checkPermissions() {
+        try {
+          const res = await fetch('/api/myPermissions');
+          if (res.ok) {
+            const data = await res.json();
+            const allowedPages = data.pages || [];
+            
+            // Mostrar links del sidebar que estén en la lista de permitidos
+            // Seleccionamos todos los links dentro del contenedor del sidebar
+            const sidebarLinks = document.querySelectorAll('.fixed.inset-y-0.left-0 a');
+            sidebarLinks.forEach(link => {
+              const href = link.getAttribute('href');
+              
+              // Si es el logo (MG) lo dejamos como está (no tiene display hidden por defecto)
+              if (!href) return;
+
+              // Si el href está en la lista de permitidos, lo mostramos
+              if (allowedPages.includes(href)) {
+                link.style.display = 'flex';
+              }
+              // Mantenemos siempre visibles Dashboard e Inicio
+              else if (href === '/panel' || href === '#') {
+                link.style.display = 'flex';
+              }
+            });
+          }
+        } catch (e) {
+          console.error("Error al verificar permisos:", e);
+        }
+      }
+
       async function handleLogout() {
         const btn = document.getElementById('btn-logout');
         btn.disabled = true;
@@ -470,6 +510,9 @@
           btn.style.opacity = '1';
         }
       }
+
+      // Ejecutar al cargar
+      checkPermissions();
     </script>
   </body>
 </html>

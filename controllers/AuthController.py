@@ -29,7 +29,7 @@ def login(username, password, code):
             )
 
         # 2 Verificar que las credenciales sean válidas
-        respuesta = DB.GETDB("SELECT id, email, password, username FROM users WHERE username = %s", (username,))
+        respuesta = DB.GETDB("SELECT id, email, password, username, type FROM users WHERE username = %s", (username,))
         if respuesta != []:
             # 3 Generar token de acceso 
 
@@ -43,6 +43,7 @@ def login(username, password, code):
                     "user_id": user["id"],
                     "email": user["email"],
                     "username": user["username"],
+                    "type": user["type"],
                     "scope": "full",
                     "exp": datetime.utcnow() + timedelta(seconds=int(JWT_EXPIRES_IN))
                 }   
@@ -77,7 +78,8 @@ def login(username, password, code):
                     status_code=200,
                     content={
                         "message": "Login exitoso",
-                        "token": token
+                        "token": token,
+                        "type": user["type"]
                     }
                 )            
                 # Configurar la cookie
@@ -131,7 +133,7 @@ def login(username, password, code):
 def login2FA(username, password):
     try:
         # 1 Verificar credenciales
-        respuesta = DB.GETDB("SELECT id, email, password, username FROM users WHERE username = %s", (username,))
+        respuesta = DB.GETDB("SELECT id, email, password, username, type FROM users WHERE username = %s", (username,))
         if respuesta != []:
             # 2 Generar token de acceso 
 
@@ -145,6 +147,7 @@ def login2FA(username, password):
                     "user_id": user["id"],
                     "email": user["email"],
                     "username": user["username"],
+                    "type": user["type"],
                     "scope": "2fa_setup",
                     "exp": datetime.utcnow() + timedelta(seconds=int(JWT_EXPIRES_IN))
                 }   
@@ -175,7 +178,8 @@ def login2FA(username, password):
                     status_code=200,
                     content={
                         "message": "Login exitoso",
-                        "token": token
+                        "token": token,
+                        "type": user["type"]
                     }
                 )            
                 # Configurar la cookie

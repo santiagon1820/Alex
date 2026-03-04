@@ -16,6 +16,7 @@ import controllers.TwoFAController as TwoFAController
 import controllers.VerifyTokenController as VerifyTokenController
 import controllers.CotizacionesController as CotizacionesController
 import controllers.ProductsController as ProductsController
+import controllers.PermissionsController as PermissionsController
 
 
 # Importamos schemas
@@ -90,6 +91,11 @@ def read_panel(is_logged_in: dict = Depends(VerifyTokenController.check_is_logge
 def read_cotizaciones(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
     if not is_logged_in:
         return RedirectResponse(url="/", status_code=302)
+    
+    # Verificar permisos
+    if not PermissionsController.has_permission(is_logged_in.get("type", 0), "/panel/cotizaciones"):
+        return RedirectResponse(url="/panel", status_code=302)
+
     response = FileResponse("templates/cotizaciones.html")
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
@@ -100,6 +106,11 @@ def read_cotizaciones(is_logged_in: dict = Depends(VerifyTokenController.check_i
 def read_productos(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
     if not is_logged_in:
         return RedirectResponse(url="/", status_code=302)
+
+    # Verificar permisos
+    if not PermissionsController.has_permission(is_logged_in.get("type", 0), "/panel/productos"):
+        return RedirectResponse(url="/panel", status_code=302)
+
     response = FileResponse("templates/productos.html")
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
@@ -110,6 +121,11 @@ def read_productos(is_logged_in: dict = Depends(VerifyTokenController.check_is_l
 def read_seguimiento(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
     if not is_logged_in:
         return RedirectResponse(url="/", status_code=302)
+
+    # Verificar permisos
+    if not PermissionsController.has_permission(is_logged_in.get("type", 0), "/panel/seguimiento"):
+        return RedirectResponse(url="/panel", status_code=302)
+
     response = FileResponse("templates/seguimiento.html")
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
@@ -168,7 +184,8 @@ def login(data: schemasPayload.Login2FA, is_logged_in: dict = Depends(VerifyToke
 )
 def verifySession(token_data: dict = Depends(VerifyTokenController.verify_token)):
     return {
-        "message": "Ok"
+        "message": "Ok",
+        "type": token_data.get("type", 0)
     }
 
 @app.get(
@@ -184,7 +201,27 @@ def verifySession(token_data: dict = Depends(VerifyTokenController.verify_token)
 )
 def verifySession2FA(token_data: dict = Depends(VerifyTokenController.verify_token_2fa)):
     return {
-        "message": "Ok"
+        "message": "Ok",
+        "type": token_data.get("type", 0)
+    }
+
+# Endpoint para obtener permisos del usuario
+@app.get(
+    "/api/myPermissions",
+    tags=["Auth"],
+    summary="Obtener permisos del usuario",
+    responses={
+        200: {"model": dict},
+        401: {"model": Schemas.VerifySession401},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+def get_my_permissions(token_data: dict = Depends(VerifyTokenController.verify_token)):
+    user_type = token_data.get("type", 0)
+    pages = PermissionsController.get_user_pages(user_type)
+    return {
+        "pages": pages,
+        "type": user_type
     }
 
 @app.post(

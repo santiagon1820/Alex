@@ -33,10 +33,12 @@ class Login400_Active(BaseModel):
 
 class VerifySession200(BaseModel):
     message: str
+    type: Optional[int] = None
     model_config = {
         "json_schema_extra":{
             "example":{
-                "message":"Ok"
+                "message":"Ok",
+                "type": 0
             }
         }
     }
@@ -136,11 +138,13 @@ class CotizacionFolio429(BaseModel):
 class Login200(BaseModel):
     message: str
     token: str
+    type: int
     model_config = {
         "json_schema_extra":{
             "example":{
                 "message":"Login exitoso",
-                "token":"eyJ..."
+                "token":"eyJ...",
+                "type": 0
             }
         }
     }
