@@ -229,3 +229,31 @@ def login2FA(username, password):
 def hash_password(password):
     ROUNDS = int(os.getenv("ROUNDS"))
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(ROUNDS))
+
+# Función para cerrar sesión
+def logout(token: str):
+    try:
+        # Decodificar el token (sin verificar expiración, por si ya caducó)
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"], options={"verify_exp": False})
+        user_id = payload.get("user_id")
+
+        if not user_id:
+            return JSONResponse(status_code=401, content={"Error": "Token inválido"})
+
+        # Marcar la sesión como inactiva en la BD
+        DB.PUTDB(
+            "UPDATE user_sessions SET isActive = 0 WHERE user_id = %s AND token = %s",
+            (user_id, token)
+        )
+
+        # Respuesta eliminando la cookie
+        response = JSONResponse(
+            status_code=200,
+            content={"message": "Sesión cerrada exitosamente"}
+        )
+        response.delete_cookie("token", path="/")
+        return response
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"Error": str(e)})
+

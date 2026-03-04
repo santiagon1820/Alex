@@ -1,0 +1,60 @@
+/* ============================================================
+   seguimiento.css — Estilos para la página de Seguimiento
+   ============================================================ */
+
+body {
+    font-family: 'Inter', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Ocultar scrollbar manteniendo funcionalidad */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Logo / brand link en el header */
+.brand-link {
+    font-size: 1.125rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #137fec;
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+.brand-link:hover {
+    opacity: 0.8;
+}
+
+/* Header responsive: en móvil ocultar botones de acción de texto,
+   mostrar sólo íconos */
+@media (max-width: 640px) {
+    .header-action-label {
+        display: none;
+    }
+    .header-search {
+        width: 100%;
+        max-width: 160px;
+    }
+}
+
+/* Columnas sticky de la tabla */
+.table-sticky-left-0 {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+}
+.table-sticky-left-100 {
+    position: sticky;
+    left: 100px;
+    z-index: 10;
+}
+.table-sticky-right {
+    position: sticky;
+    right: 0;
+    z-index: 10;
+}

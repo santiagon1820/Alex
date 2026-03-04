@@ -78,11 +78,11 @@
         </div>
         <nav class="flex-1 space-y-1 overflow-y-auto pr-2 custom-scrollbar">
           <a
-            class="flex items-center gap-3 px-4 py-3 rounded-lg sidebar-active"
-            href="#"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            href="/panel/seguimiento"
           >
-            <span class="material-symbols-outlined text-[20px]">analytics</span>
-            <span class="text-sm truncate">Seguimiento</span>
+            <span class="material-symbols-outlined text-[20px] text-gray-500">analytics</span>
+            <span class="text-sm font-medium">Seguimiento</span>
           </a>
           <a
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -149,13 +149,15 @@
           </a>
         </nav>
         <div class="mt-auto pt-4 border-t border-gray-100 dark:border-gray-800">
-          <a
-            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-danger"
-            href="#"
+          <button
+            id="btn-logout"
+            onclick="handleLogout()"
+            class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-danger cursor-pointer"
           >
             <span class="material-symbols-outlined text-[20px]">logout</span>
             <span class="text-sm font-medium">Cerrar Sesión</span>
-          </a>
+          </button>
+
           <a
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mt-1"
             href="#"
@@ -442,5 +444,33 @@
         </button>
       </div>
     </main>
+    <script>
+      async function handleLogout() {
+        const btn = document.getElementById('btn-logout');
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+
+        try {
+          const res = await fetch('/api/logout', {
+            method: 'POST',
+            credentials: 'include'
+          });
+
+          if (res.ok) {
+            window.location.href = '/';
+          } else {
+            const data = await res.json();
+            alert(data.Error || 'Error al cerrar sesión');
+            btn.disabled = false;
+            btn.style.opacity = '1';
+          }
+        } catch (err) {
+          alert('Error de conexión al cerrar sesión');
+          btn.disabled = false;
+          btn.style.opacity = '1';
+        }
+      }
+    </script>
   </body>
 </html>
+

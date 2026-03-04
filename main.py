@@ -1,5 +1,6 @@
 # Importamos librerias que vayamos a utilizar 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Cookie
+
 from typing import List
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.requests import Request
@@ -105,6 +106,15 @@ def read_productos(is_logged_in: dict = Depends(VerifyTokenController.check_is_l
     response.headers["Expires"] = "0"
     return response
 
+@app.get("/panel/seguimiento", include_in_schema=False)
+def read_seguimiento(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    if not is_logged_in:
+        return RedirectResponse(url="/", status_code=302)
+    response = FileResponse("templates/seguimiento.html")
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 # ----------- BACKEND ----------- #
 # Endpoint Login
 @app.post(
@@ -176,6 +186,31 @@ def verifySession2FA(token_data: dict = Depends(VerifyTokenController.verify_tok
     return {
         "message": "Ok"
     }
+
+@app.post(
+    "/api/logout",
+    tags=["Auth"],
+    summary="Cerrar sesión",
+    responses={
+        200: {"model": Schemas.Logout200},
+        401: {"model": Schemas.VerifySession401},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+def logout(token: str = Cookie(None), credentials: HTTPBearer = Depends(HTTPBearer(auto_error=False))):
+    # Obtener el token desde cookie o header Authorization
+    final_token = None
+    if credentials:
+        final_token = credentials.credentials
+    elif token:
+        final_token = token
+
+    if not final_token:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=401, content={"Error": "No hay sesión activa"})
+
+    return AuthController.logout(final_token)
+
 
 # Endpoint para cerrar todas las sesiones (CRON)
 @app.post(
