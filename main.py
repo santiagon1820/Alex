@@ -393,3 +393,31 @@ def update_category(data: schemasPayload.Category):
 )
 def delete_category(id_category: int):
     return ProductsController.delete_category(id_category)
+
+@app.get(
+    "/api/getCodes",
+    tags=["Inventario"],
+    summary="Obtener todos los códigos",
+    responses={
+        200: {"model": List[Schemas.CodeRecord]},
+        401: {"model": Schemas.VerifySession401},
+        500: {"model": Schemas.InternalServerError}
+    },
+    dependencies=[Depends(VerifyTokenController.verify_token)]
+)
+def get_codes():
+    return ProductsController.get_codes()
+
+@app.post(
+    "/api/saveCode",
+    tags=["Inventario"],
+    summary="Guardar un código",
+    responses={
+        200: {"model": Schemas.InventoryMessage200},
+        401: {"model": Schemas.VerifySession401},
+        500: {"model": Schemas.InternalServerError}
+    },
+    dependencies=[Depends(VerifyTokenController.verify_token)]
+)
+def save_code(data: schemasPayload.Code):
+    return ProductsController.save_code(data.dict())

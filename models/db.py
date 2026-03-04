@@ -29,7 +29,7 @@ def get_connection():
 def run_query(query, params=None):
     conn = get_connection()
     if conn is None:
-        return False
+        raise Exception("Error al conectar con la base de datos MySQL")
     cursor = conn.cursor()
     try:
         cursor.execute(query, params)
@@ -37,7 +37,7 @@ def run_query(query, params=None):
         return True
     except Error as e:
         print("Error while connecting to MySQL", e)
-        return False
+        raise e # Re-lanzar el error para que el controlador lo capture
     finally:
         cursor.close()
         conn.close()
@@ -58,7 +58,7 @@ def DELDB(query, params=None):
 def GETDB(query, params=None):
     conn = get_connection()
     if conn is None:
-        return None
+        raise Exception("Error al conectar con la base de datos MySQL")
     cursor = conn.cursor(dictionary=True)
     try:
         cursor.execute(query, params)
@@ -66,7 +66,7 @@ def GETDB(query, params=None):
         return result
     except Error as e:
         print("Error a la hora de obtener datos:", e)
-        return None
+        raise e # Re-lanzar el error
     finally:
         cursor.close()
         conn.close()

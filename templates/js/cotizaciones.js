@@ -126,6 +126,16 @@ const companyConfig = {
     rfc: "IDA220310C28",
     rupc: "P38543",
   },
+  ddv: {
+    nombre: "DDV SOLUCIONES S.A. DE C.V.",
+    logo: "ddvSign.png",
+    headerLogo: "ddv.png",
+    firma: "Carlos Vidarte Rodríguez",
+    prefix: "DDVCot",
+    margins: { top: 135, bottom: 50 },
+    rfc: "DSO181213C61",
+    rupc: "P30289",
+  },
 };
 
 let currentCompany = "interlab";
@@ -512,11 +522,13 @@ function render() {
     page.className = "page";
     // Set background image dynamically based on selected company
     const config = companyConfig[currentCompany];
-    page.style.backgroundImage = `url("https://s3-mx-1.mglab.com/mglab/${config.headerLogo}")`;
+    page.style.backgroundImage = `url("https://s3-mx-1.mglab.qzz.io/mglab/${config.headerLogo}")`;
 
     // Add specific class for CSS styling (colors, borders)
     if (currentCompany === "davana") {
       page.classList.add("davana-mode");
+    } else if (currentCompany === "ddv") {
+      page.classList.add("ddv-mode");
     } else {
       page.classList.add("interlab-mode");
     }
@@ -539,13 +551,26 @@ function render() {
     if (queueRows.length > 0) {
       const tableStruct = document.createElement("table");
       tableStruct.className = "table-cotizacion";
-      // Headers deben ser iguales para ambas empresas según solicitud
-      tableStruct.innerHTML = `<thead><tr>
+      
+      // Headers específicos por empresa
+      let headerHTML = '';
+      if (currentCompany === "ddv") {
+        headerHTML = `<thead><tr>
+                        <td style="width:5%">PROG.</td><td style="width:8%">U.M</td><td style="width:10%">TIPO EQUIPO</td>
+                        <td style="width:36%">DESCRIPCION.</td><td style="width:11%">CANT.</td>
+                        <td style="width:10%">PRECIO UNITARIO</td>
+                        <td style="width:15%">TOTAL</td><td style="width:5%">X</td>
+                    </tr></thead><tbody></tbody>`;
+      } else {
+        headerHTML = `<thead><tr>
                         <td style="width:5%">Partida</td><td style="width:8%">Cantidad</td><td style="width:10%">U.M</td>
                         <td style="width:11%">P.N./Código</td><td style="width:36%">Descripción</td>
                         <td style="width:10%">Precio U.</td>
                         <td style="width:15%">Total</td><td style="width:5%">X</td>
                     </tr></thead><tbody></tbody>`;
+      }
+      
+      tableStruct.innerHTML = headerHTML;
 
       content.appendChild(tableStruct);
       currentY += tableStruct.querySelector("thead").offsetHeight;
@@ -627,9 +652,64 @@ function createRowTR(data, index) {
   const tr = document.createElement("tr");
   const totalRow = data.cantidad * data.precio;
   const isDavana = currentCompany === "davana";
+  const isDDV = currentCompany === "ddv";
   const textColor = "#000"; // Siempre negro a solicitud del usuario
 
-  tr.innerHTML = `
+  // DDV tiene un orden diferente de columnas
+  if (isDDV) {
+    tr.innerHTML = `
+                <td data-label="Prog" class="text-center" style="color:${textColor};">${index}</td>
+                
+                <td data-label="U.M.">
+                    <select class="no-print-select" onchange="updateRow('${data.id}', 'um', this.value, this)" style="color:${textColor}; text-align:center; appearance: none; -webkit-appearance: none; background: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22m6 9 6 6 6-6%22/></svg>') no-repeat right 5px center; padding-right: 20px;">
+                        ${(data.um_options || [])
+                          .map(
+                            (opt) =>
+                              `<option value="${opt}" ${data.um === opt ? "selected" : ""}>${opt}</option>`,
+                          )
+                          .join("")}
+                    </select>
+                    <div class="print-only" style="display:none; color:${textColor}; text-align:center;">${data.um}</div>
+                </td>
+
+                <td data-label="Tipo Equipo">
+                    <input list="pn-list" value="${data.pn}" placeholder="" oninput="updateRow('${data.id}', 'pn', this.value, this)" style="color:${textColor};">
+                    <div class="print-only" style="display:none; color:${textColor};">${data.pn}</div>
+                </td>
+
+                <td data-label="Descripción" class="desc-cell" style="position:relative;">
+                    ${
+                      data.desc_options && data.desc_options.length > 1
+                        ? `
+                        <div class="desc-variants-toggle no-print" style="position:absolute; top:2px; right:2px;">
+                           <select onchange="updateRow('${data.id}', 'descripcion', this.value, document.getElementById('desc_${data.id}')); render();" style="width:20px; height:20px; opacity:0; cursor:pointer; position:absolute; z-index:2;">
+                               <option value="">-- Variantes --</option>
+                               ${data.desc_options.map((d) => `<option value="${d.replace(/"/g, "&quot;")}" ${data.descripcion === d ? "selected" : ""}>${d.substring(0, 50)}...</option>`).join("")}
+                           </select>
+                           <span class="material-icons-outlined" style="font-size:16px; color:#666; cursor:pointer;">expand_more</span>
+                        </div>
+                    `
+                        : ""
+                    }
+                    <textarea 
+                        id="desc_${data.id}" 
+                        placeholder="" 
+                        oninput="updateRow('${data.id}', 'descripcion', this.value, this)" 
+                        style="color:${textColor}; width:100%; display:block;"
+                    >${data.descripcion}</textarea>
+                </td>
+                
+                <td data-label="Cant"><input type="number" id="cant_${data.id}" class="text-center" style="color:${textColor};" value="${data.cantidad}" oninput="updateRow('${data.id}', 'cantidad', this.value, this)"></td>
+                
+                <td data-label="Precio"><div style="display:flex; align-items:center;"><span style="color:${textColor};">$</span><input type="text" id="prec_${data.id}" class="text-right" style="color:${textColor};" value="${formatCommas(data.precio)}" oninput="handlePriceInput('${data.id}', this)"></div></td>
+
+                <td data-label="Total" class="text-right" style="color:${textColor};" id="total_cell_${data.id}">${formatMoney(totalRow)}</td>
+                <td class="text-center"><button class="delete-btn" onclick="deleteRow('${data.id}')">🗑</button></td>
+
+            `;
+  } else {
+    // Orden original para Interlab y Davana
+    tr.innerHTML = `
                 <td data-label="Pos" class="text-center" style="color:${textColor};">${index}</td>
                 <td data-label="Cant"><input type="number" id="cant_${data.id}" class="text-center" style="color:${textColor};" value="${data.cantidad}" oninput="updateRow('${data.id}', 'cantidad', this.value, this)"></td>
                 <td data-label="U.M.">
@@ -677,6 +757,7 @@ function createRowTR(data, index) {
                 <td class="text-center"><button class="delete-btn" onclick="deleteRow('${data.id}')">🗑</button></td>
 
             `;
+  }
   return tr;
 }
 
@@ -702,7 +783,7 @@ function getHeaderHTML() {
                         </td>
                     </tr>
                     <tr>
-                         <td style="background-color:#dfe3e6; border-color:#9daab6; color:#333;">A quien<br>Corresponda:</td>
+                         <td style="background-color:#dfe3e6; border-color:#9daab6; color:#333;">Asunto:</td>
                          <td style="border-color:#9daab6;">
                             <input id="h_asunto" value="${appData.header.asunto}" placeholder="Presente" style="color:#333;">
                          </td>
@@ -716,6 +797,42 @@ function getHeaderHTML() {
                  <div style="text-align:center; font-style:italic; font-size:10px; margin-top:10px; color:#333; border:1px solid #9daab6; padding:5px; background-color:transparent;">
                     Por medio del presente, hacemos llegar la cotización que fue solicitada:
                  </div>
+            </div>
+        `;
+  }
+
+  if (currentCompany === "ddv") {
+    return `
+            <div style="margin-bottom: 15px;">
+                 <!-- Yellow header section -->
+                 <table style="width:100%; margin-bottom:5px;">
+                    <tr>
+                        <td style="background-color:#FFFF00; padding:3px 8px; font-weight:bold; font-size:11px; border:1px solid #000; color:#000; text-align:left;">DEPENDENCIA</td>
+                    </tr>
+                    <tr>
+                        <td style="background-color:#FFFF00; padding:3px 8px; font-weight:bold; font-size:11px; border:1px solid #000; color:#000; text-align:left;">A QUIEN CORRESPONDA</td>
+                    </tr>
+                    <tr>
+                        <td style="background-color:#FFFF00; padding:3px 8px; font-weight:bold; font-size:11px; border:1px solid #000; color:#000; text-align:left;">PRESENTE</td>
+                    </tr>
+                 </table>
+                 
+                 <!-- Date positioned on the right -->
+                 <div style="text-align:right; margin-bottom:10px;">
+                    <input id="h_fecha" value="${appData.header.fecha}" style="border:none; background:transparent; text-align:right; font-size:11px; font-weight:bold;">
+                 </div>
+                 
+                 <!-- Yellow title bar -->
+                 <table style="width:100%; margin-bottom:10px;">
+                    <tr>
+                        <td style="background-color:#FFFF00; padding:5px; font-weight:bold; font-size:12px; border:1px solid #000; color:#000; text-align:center;">DDV FECHA 01 FOLIO DEPENDENCIA</td>
+                    </tr>
+                 </table>
+                 
+                 <!-- Hidden inputs for compatibility -->
+                 <input type="hidden" id="h_numero" value="${appData.header.numero}">
+                 <input type="hidden" id="h_dependencia" value="${appData.header.dependencia}">
+                 <input type="hidden" id="h_asunto" value="${appData.header.asunto}">
             </div>
         `;
   }
@@ -746,6 +863,47 @@ function getHeaderHTML() {
 }
 
 function getTotalesHTML(sub, iva, total) {
+  const config = companyConfig[currentCompany];
+  
+  if (currentCompany === "ddv") {
+    return `
+                <div style="overflow:auto;">
+                    <table class="table-cotizacion" style="margin-top:5px;">
+                        <tr>
+                            <td colspan="7" class="bg-blue text-center" style="font-weight:bold;">NOTA</td>
+                            <td class="text-center" style="font-weight:bold;">SUBTOTAL</td>
+                        </tr>
+                        <tr>
+                            <td colspan="7" rowspan="3"></td>
+                            <td class="text-right display-subtotal">${formatMoney(sub)}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-right">IVA</td>
+                        </tr>
+                        <tr>
+                            <td class="text-right">PORCENTAJE</td>
+                        </tr>
+                        <tr>
+                            <td colspan="7" class="text-center" style="font-weight:bold;">NO. PROVEEDOR P 30289</td>
+                            <td class="text-center" style="font-weight:bold;">TOTAL</td>
+                        </tr>
+                        <tr>
+                            <td colspan="7"></td>
+                            <td class="text-right display-iva">${formatMoney(iva)}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="7"></td>
+                            <td class="text-center">16%</td>
+                        </tr>
+                        <tr>
+                            <td colspan="7"></td>
+                            <td class="text-right display-total font-bold">${formatMoney(total)}</td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+  }
+  
   const mnRow =
     currentCompany === "davana"
       ? `<tr><td style="border:none;"></td><td class="text-center bg-blue" style="font-weight:bold; font-size:10px;">M.N</td></tr>`
@@ -767,6 +925,12 @@ function getLetraHTML() {
     return `<div style="background-color:#dfe3e6; padding:5px; text-align:center; font-size:10px; border:1px solid #9daab6; margin-top:10px;">
              <input id="f_letra" value="${appData.footer.cantidadLetra}" readonly style="text-align:center;">
             </div>`;
+  }
+  if (currentCompany === "ddv") {
+    return `<table>
+                <tr><td class="text-center bg-blue" style="font-weight:bold;">CANTIDAD CON LETRA:</td></tr>
+                <tr><td><input id="f_letra" value="${appData.footer.cantidadLetra}" readonly></td></tr>
+            </table>`;
   }
   return `<table>
                 <tr><td class="text-center bg-blue">CANTIDAD CON LETRA</td></tr>
@@ -813,6 +977,39 @@ function getCondicionesHTML() {
              </tr>
         </table>`;
   }
+  
+  if (currentCompany === "ddv") {
+    const config = companyConfig[currentCompany];
+    return `
+        <table style="margin-top:10px;">
+             <tr><td class="text-center bg-blue" style="font-weight:bold;">MONEDA: Pesos mexicanos</td></tr>
+        </table>
+        <table style="margin-top:5px;">
+             <tr><td class="text-center bg-blue" style="font-weight:bold;">GARANTIA: 1 AÑO</td></tr>
+        </table>
+        <table style="margin-top:5px;">
+             <tr><td class="text-center bg-blue" style="font-weight:bold;">TIEMPO ENTREGA: 7 SEMANAS</td></tr>
+        </table>
+        <table style="margin-top:5px;">
+             <tr><td class="text-center bg-blue" style="font-weight:bold;">FORMA DE PAGO: Crédito de 20 días.</td></tr>
+        </table>
+        <table style="margin-top:5px;">
+             <tr><td class="text-center bg-blue" style="font-weight:bold;">VIGENCIA DE LA COTIZACIÓN: La vigencia es de 60 días naturales</td></tr>
+        </table>
+        <table style="margin-top:5px;">
+             <tr><td class="text-center" style="font-weight:bold;">DDV SOLUCIONES SA DE CV</td></tr>
+        </table>
+        <table style="margin-top:5px;">
+             <tr><td class="text-center" style="font-weight:bold;">DSO181213C61</td></tr>
+        </table>
+        <table style="margin-top:5px;">
+             <tr><td class="text-center" style="font-weight:bold;">GIRO: Venta de equipo de cómputo, accesorios y consumibles</td></tr>
+        </table>
+        <div style="text-align:center; font-size:10px; margin-top:5px;">
+           proyecto@ddvsoluciones.com.mx
+        </div>`;
+  }
+  
   return `<table>
                 <tr><td class="text-center bg-blue">CONDICIONES DE PAGO</td></tr>
                 <tr><td>
@@ -823,15 +1020,15 @@ function getCondicionesHTML() {
 
 function getDatosEmpresaHTML() {
   const config = companyConfig[currentCompany];
-  if (currentCompany === "davana") {
-    return ``; // Empty because it's now integrated above
+  if (currentCompany === "davana" || currentCompany === "ddv") {
+    return ``; // Empty because it's integrated in other sections
   }
   return `<table><tr><td class="text-center bg-blue">DATOS DE EMPRESA</td></tr><tr><td class="text-left">RFC: ${config.rfc}</td></tr></table>`;
 }
 function getFirmaHTML() {
   const config = companyConfig[currentCompany];
   // Ajuste de URL de imagen según empresa
-  const imgUrl = `https://s3-mx-1.mglab.com/mglab/${config.logo}`;
+  const imgUrl = `https://s3-mx-1.mglab.qzz.io/mglab/${config.logo}`;
 
   if (currentCompany === "davana") {
     return `<div style="text-align:center; margin-top:40px;">
@@ -845,6 +1042,20 @@ function getFirmaHTML() {
                 <div style="background-color:#dfe3e6; color:#333; font-size:9px; padding:5px; width:220px; margin:10px auto; border:1px solid #ccc;">DAVANA MEXICO S DE RL DE CV</div>
              </div>`;
   }
+  
+  if (currentCompany === "ddv") {
+    return `<div style="text-align:center; margin-top:30px;">
+                <div style="font-size:10px; color:#000; margin-bottom:10px; font-weight:bold;">ATENTAMENTE</div>
+                <div style="height: 80px; display:flex; align-items:flex-end; justify-content:center;">
+                    <img src="${imgUrl}" class="img-firma" style="max-height:80px;">
+                </div>
+                <div style="width:250px; border-top:2px solid #000; margin:10px auto;"></div>
+                <div style="font-size:11px; font-weight:bold;">${config.firma}</div>
+                <div style="font-size:10px; font-weight:bold;">DDV SOLUCIONES S.A. DE C.V.</div>
+                <div style="font-size:10px; font-weight:bold;">REPRESENTANTE LEGAL</div>
+             </div>`;
+  }
+  
   return `<table><tr><td class="text-center bg-blue">ATENTAMENTE</td></tr><tr><td class="text-center" style="height: 100px; vertical-align: bottom;"><img src="${imgUrl}" class="img-firma"><div class="firma-linea"></div>${config.firma}<br>VENTAS</td></tr></table>`;
 }
 

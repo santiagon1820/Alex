@@ -231,6 +231,7 @@ class ProductRecord(BaseModel):
     category_name: Optional[str] = None
     stock: int
     precioOC: float
+    codigo: str
 
 class InventoryMessage200(BaseModel):
     message: str
@@ -255,6 +256,20 @@ class CotizacionPNs200(BaseModel):
         "json_schema_extra":{
             "example":{
                 "pns": ["PN001", "PN002", "PN003"]
+            }
+        }
+    }
+
+class CodeRecord(BaseModel):
+    codigo: str
+    descripcion: str
+    PNs: str
+    model_config = {
+        "json_schema_extra":{
+            "example":{
+                "codigo": "C001",
+                "descripcion": "Descripción del código",
+                "PNs": "PN1|PN2"
             }
         }
     }

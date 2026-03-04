@@ -73,7 +73,12 @@ class Product(BaseModel):
     category: Optional[int] = 1
     stock: int = 0
     precioOC: float = 0.0
+    codigo: str
 
 class Category(BaseModel):
     id_category: Optional[int] = None
     category: str
+
+class Code(BaseModel):
+    codigo: str
+    descripcion: str

@@ -1,7 +1,7 @@
 import { createChat } from "https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js";
 createChat({
   webhookUrl:
-    "https://n8n.mglab/webhook/55d24c91-3acf-4207-bead-08233f76fcea/chat",
+    "https://n8n.mglab.qzz.io/webhook/55d24c91-3acf-4207-bead-08233f76fcea/chat",
   webhookConfig: {
     method: "POST",
     headers: {},

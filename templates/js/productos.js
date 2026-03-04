@@ -258,6 +258,159 @@ const CategoryManagerModal = ({ isOpen, onClose, categories, onRefresh }) => {
     );
 };
 
+const CodeSelectionModal = ({ isOpen, onClose, onSelect }) => {
+    const [codes, setCodes] = useState([]);
+    const [mode, setMode] = useState('select'); // 'select' or 'create'
+    const [newCode, setNewCode] = useState({ codigo: '', descripcion: '' });
+    const [isSaving, setIsSaving] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchCodes();
+            setMode('select');
+        }
+    }, [isOpen]);
+
+    const fetchCodes = async () => {
+        try {
+            const response = await fetch('/api/getCodes');
+            if (response.ok) {
+                const data = await response.json();
+                setCodes(data);
+            }
+        } catch (error) {
+            console.error('Error fetching codes:', error);
+        }
+    };
+
+    const handleCreate = async () => {
+        if (!newCode.codigo || !newCode.descripcion) {
+            Swal.fire('Error', 'Por favor llena todos los campos', 'error');
+            return;
+        }
+        setIsSaving(true);
+        try {
+            const response = await fetch('/api/saveCode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newCode)
+            });
+            if (response.ok) {
+                Swal.fire('¡Éxito!', 'Código creado correctamente', 'success');
+                onSelect(newCode.codigo);
+                onClose();
+            } else {
+                Swal.fire('Error', 'No se pudo crear el código (tal vez ya existe)', 'error');
+            }
+        } catch (error) {
+            Swal.fire('Error', 'Conexión fallida', 'error');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    const filteredCodes = codes.filter(c => 
+        (c.codigo && c.codigo.toLowerCase().includes(searchTerm.toLowerCase())) || 
+        (c.descripcion && c.descripcion.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
+    return (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-[#1a202c] w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700 animate-in zoom-in-95 duration-200">
+                <div className="bg-primary p-5 text-white flex justify-between items-center">
+                    <h2 className="text-xl font-black">{mode === 'select' ? 'Seleccionar Código' : 'Crear Nuevo Código'}</h2>
+                    <button onClick={onClose} className="p-1.5 hover:bg-white/20 rounded-full transition-colors">
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                    <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+                        <button 
+                            onClick={() => setMode('select')}
+                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${mode === 'select' ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' : 'text-gray-500'}`}
+                        >
+                            Seleccionar Existente
+                        </button>
+                        <button 
+                            onClick={() => setMode('create')}
+                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${mode === 'create' ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' : 'text-gray-500'}`}
+                        >
+                            Crear Nuevo
+                        </button>
+                    </div>
+
+                    {mode === 'select' ? (
+                        <div className="space-y-4">
+                            <div className="relative">
+                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                                <input 
+                                    className="form-input w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-primary h-10 px-10"
+                                    placeholder="Buscar código..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2">
+                                {filteredCodes.length > 0 ? filteredCodes.map((c) => (
+                                    <div 
+                                        key={c.codigo}
+                                        onClick={() => { onSelect(c.codigo); onClose(); }}
+                                        className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/50 cursor-pointer transition-all group"
+                                    >
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-primary font-black">{c.codigo}</span>
+                                            <span className="material-symbols-outlined text-gray-300 group-hover:text-primary transition-colors">check_circle</span>
+                                        </div>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{c.descripcion}</p>
+                                    </div>
+                                )) : (
+                                    <p className="text-center py-8 text-gray-500">No se encontraron códigos</p>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Código</label>
+                                <input 
+                                    className="form-input w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white h-11 px-4"
+                                    placeholder="Ej. C001"
+                                    value={newCode.codigo}
+                                    maxLength={10}
+                                    onChange={(e) => setNewCode({...newCode, codigo: e.target.value.toUpperCase()})}
+                                />
+                                <div className="flex justify-end pr-1">
+                                    <span className={`text-[10px] font-bold ${newCode.codigo.length >= 10 ? 'text-accent-red' : 'text-gray-400'}`}>{newCode.codigo.length}/10</span>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Descripción</label>
+                                <textarea 
+                                    className="form-textarea w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white min-h-[100px] p-4 text-sm"
+                                    placeholder="Describe para qué sirve este código..."
+                                    value={newCode.descripcion}
+                                    onChange={(e) => setNewCode({...newCode, descripcion: e.target.value})}
+                                />
+                            </div>
+                            <button 
+                                onClick={handleCreate}
+                                disabled={isSaving}
+                                className="w-full bg-primary text-white font-black py-3 rounded-xl hover:opacity-90 transition-all disabled:opacity-50 mt-4 shadow-lg shadow-primary/20"
+                            >
+                                {isSaving ? 'Creando...' : 'Crear y Seleccionar'}
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const Header = () => {
     const location = useLocation();
     return (
@@ -440,12 +593,21 @@ const InventoryDatabase = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden relative">
+                        {isLoading && (
+                            <div className="absolute inset-0 bg-white/50 dark:bg-gray-800/50 backdrop-blur-[1px] z-10 flex items-center justify-center">
+                                <div className="flex flex-col items-center gap-2">
+                                    <span className="material-symbols-outlined animate-spin text-primary text-3xl">sync</span>
+                                    <span className="text-sm font-bold text-primary">Cargando...</span>
+                                </div>
+                            </div>
+                        )}
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse min-w-[1000px]">
                                 <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
                                     <tr>
                                         <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">PN</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Código</th>
                                         <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Marca / Modelo</th>
                                         <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">U.M</th>
                                         <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Descripción</th>
@@ -456,18 +618,15 @@ const InventoryDatabase = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700 relative">
-                                    {isLoading && (
-                                        <div className="absolute inset-0 bg-white/50 dark:bg-gray-800/50 backdrop-blur-[1px] z-10 flex items-center justify-center">
-                                            <div className="flex flex-col items-center gap-2">
-                                                <span className="material-symbols-outlined animate-spin text-primary text-3xl">sync</span>
-                                                <span className="text-sm font-bold text-primary">Cargando...</span>
-                                            </div>
-                                        </div>
-                                    )}
                                     {products.length > 0 ? products.map((item, idx) => (
                                         <tr key={idx} className="table-row">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className="text-sm font-bold text-primary">{item.pn}</span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
+                                                    {item.codigo || 'S/C'}
+                                                </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex flex-col">
@@ -617,8 +776,11 @@ const ProductUpload = () => {
         marca: (editingProduct && editingProduct.marca) || '',
         modelo: (editingProduct && editingProduct.modelo) || '',
         category: (editingProduct && editingProduct.category) || 1,
-        stock: (editingProduct && editingProduct.stock) || 0
+        stock: (editingProduct && editingProduct.stock) || 0,
+        codigo: (editingProduct && editingProduct.codigo) || ''
     });
+
+    const [showCodeModal, setShowCodeModal] = useState(false);
 
     useEffect(() => {
         fetch('/api/categories')
@@ -629,6 +791,7 @@ const ProductUpload = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         if (name.startsWith('description') && value.length > 400) return;
+        if (name === 'profile' && value.length > 100) return;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -647,6 +810,38 @@ const ProductUpload = () => {
                 stock: parseInt(formData.stock) || 0,
                 category: formData.category ? parseInt(formData.category) : 1
             };
+
+            // Eliminar original_pn si es nulo (solo se requiere en actualizaciones)
+            if (dataToSend.original_pn === null) {
+                delete dataToSend.original_pn;
+            }
+
+            // Validación de campos obligatorios
+            const requiredFields = [
+                { key: 'pn', label: 'Número de Parte (PN)' },
+                { key: 'marca', label: 'Marca' },
+                { key: 'modelo', label: 'Modelo' },
+                { key: 'category', label: 'Categoría' },
+                { key: 'um', label: 'Unidad de Medida' },
+                { key: 'profile', label: 'Perfil' },
+                { key: 'description1', label: 'Descripción 1' },
+                { key: 'description2', label: 'Descripción 2' },
+                { key: 'description3', label: 'Descripción 3' },
+                { key: 'codigo', label: 'Código de Referencia' }
+            ];
+
+            const missingFields = requiredFields.filter(f => !dataToSend[f.key] || dataToSend[f.key].toString().trim() === "");
+
+            if (missingFields.length > 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Campos Incompletos',
+                    html: `<div class="text-left"><p>Por favor completa los siguientes campos obligatorios:</p><ul class="list-disc ml-6 mt-2">${missingFields.map(f => `<li>${f.label}</li>`).join('')}</ul></div>`,
+                    confirmButtonColor: '#135bec'
+                });
+                setIsSaving(false);
+                return;
+            }
 
             const response = await fetch(url, {
                 method: method,
@@ -684,51 +879,8 @@ const ProductUpload = () => {
         }
     };
 
-    const handleGenerateQR = () => {
-        if (!formData.pn) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'PN Requerido',
-                text: 'Por favor, ingresa un Número de Parte antes de generar el QR.',
-                confirmButtonColor: '#135bec'
-            });
-            return;
-        }
-
-        Swal.fire({
-            title: `QR para: ${formData.pn}`,
-            html: `
-                <div class="flex flex-col items-center gap-6 py-4">
-                    <div id="qrcode-container" class="p-4 bg-white rounded-xl shadow-inner border border-gray-100 min-h-[200px] flex items-center justify-center"></div>
-                    <p class="text-xs text-gray-500 font-medium italic">Cuando escanees este QR en cotizaciones, el PN se autocompletará automáticamente.</p>
-                </div>
-            `,
-            showCancelButton: true,
-            confirmButtonText: '<span class="flex items-center gap-2"><span class="material-symbols-outlined">download</span> Descargar</span>',
-            cancelButtonText: 'Cerrar',
-            confirmButtonColor: '#10b981',
-            didOpen: () => {
-                const container = document.getElementById('qrcode-container');
-                new QRCode(container, {
-                    text: formData.pn,
-                    width: 200,
-                    height: 200,
-                    colorDark: "#111318",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-            },
-            preConfirm: () => {
-                const img = document.querySelector('#qrcode-container img');
-                if (img) {
-                    const link = document.createElement('a');
-                    link.href = img.src;
-                    link.download = `QR_${formData.pn}.png`;
-                    link.click();
-                }
-                return false; // Evitar que cierre el modal si solo queremos descargar
-            }
-        });
+    const handleOpenCodeModal = () => {
+        setShowCodeModal(true);
     };
 
     return (
@@ -780,15 +932,15 @@ const ProductUpload = () => {
                                 <input name="pn" value={formData.pn} onChange={handleChange} className="form-input w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:border-primary focus:ring-primary/20 h-12 px-4" placeholder="ej. PN-99201" type="text"/>
                             </div>
                             <div className="flex flex-col gap-2">
-                                <label className="text-[#111318] dark:text-white text-sm font-semibold">Marca</label>
+                                <label className="text-[#111318] dark:text-white text-sm font-semibold">Marca <span className="text-accent-red">*</span></label>
                                 <input name="marca" value={formData.marca} onChange={handleChange} className="form-input w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:border-primary focus:ring-primary/20 h-12 px-4" placeholder="ej. HP, Dell..." type="text"/>
                             </div>
                             <div className="flex flex-col gap-2">
-                                <label className="text-[#111318] dark:text-white text-sm font-semibold">Modelo</label>
+                                <label className="text-[#111318] dark:text-white text-sm font-semibold">Modelo <span className="text-accent-red">*</span></label>
                                 <input name="modelo" value={formData.modelo} onChange={handleChange} className="form-input w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:border-primary focus:ring-primary/20 h-12 px-4" placeholder="ej. Latitude 5420..." type="text"/>
                             </div>
                             <div className="flex flex-col gap-2">
-                                <label className="text-[#111318] dark:text-white text-sm font-semibold">Categoría</label>
+                                <label className="text-[#111318] dark:text-white text-sm font-semibold">Categoría <span className="text-accent-red">*</span></label>
                                 <select name="category" value={formData.category} onChange={handleChange} className="form-select w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:border-primary focus:ring-primary/20 h-12 px-4">
                                     <option value="">Seleccionar...</option>
                                     {categories.map((cat, idx) => (
@@ -797,7 +949,7 @@ const ProductUpload = () => {
                                 </select>
                             </div>
                             <div className="flex flex-col gap-2">
-                                <label className="text-[#111318] dark:text-white text-sm font-semibold">U.M (Unidad de Medida)</label>
+                                <label className="text-[#111318] dark:text-white text-sm font-semibold">U.M (Unidad de Medida) <span className="text-accent-red">*</span></label>
                                 <input name="um" value={formData.um} onChange={handleChange} className="form-input w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:border-primary focus:ring-primary/20 h-12 px-4" placeholder="ej. PIEZA, CAJA..." type="text"/>
                             </div>
                             <div className="flex flex-col gap-2">
@@ -820,10 +972,28 @@ const ProductUpload = () => {
                             </div>
                         </div>
 
-                        <div className="border-t border-gray-100 dark:border-gray-700 pt-6">
+                        <div className="border-t border-gray-100 dark:border-gray-700 pt-6 space-y-6">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-[#111318] dark:text-white text-sm font-semibold flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-primary text-xl">contact_page</span>
+                                    Perfil del Producto <span className="text-accent-red">*</span>
+                                </label>
+                                <textarea 
+                                    name="profile" 
+                                    value={formData.profile} 
+                                    onChange={handleChange} 
+                                    className="form-textarea w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:border-primary focus:ring-primary/20 min-h-[80px] p-4 text-sm" 
+                                    placeholder="ej. Especificaciones de rendimiento, público objetivo o uso principal..." 
+                                    maxLength={100}
+                                />
+                                <div className="flex justify-end pr-1">
+                                    <span className={`text-[10px] font-bold ${formData.profile.length >= 100 ? 'text-accent-red' : 'text-gray-400'}`}>{formData.profile.length}/100 caracteres</span>
+                                </div>
+                            </div>
+
                             <h3 className="text-[#111318] dark:text-white text-xl font-bold mb-4 flex items-center gap-2">
                                 <span className="material-symbols-outlined text-primary">description</span>
-                                Descripciones del Producto
+                                Descripciones del Producto <span className="text-accent-red text-xs font-normal">(Las 3 son obligatorias)</span>
                             </h3>
 
                             <div className="relative">
@@ -869,29 +1039,35 @@ const ProductUpload = () => {
                 <div className="lg:col-span-5 space-y-8">
                     <div className="bg-gradient-to-br from-primary to-[#0e48c4] rounded-xl p-8 text-white shadow-xl shadow-primary/30 relative overflow-hidden group">
                         <div 
-                            onClick={handleGenerateQR}
+                            onClick={handleOpenCodeModal}
                             className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-40 hover:opacity-100 hover:scale-110 transition-all cursor-pointer z-20"
-                            title="Haz clic para generar QR descargable"
+                            title="Haz clic para seleccionar o crear código"
                         >
-                            <span className="material-symbols-outlined text-8xl">qr_code_2</span>
+                            <span className="material-symbols-outlined text-8xl">barcode_scanner</span>
                         </div>
                         <div className="relative z-10">
-                            <p className="text-sm font-medium text-white/80 uppercase tracking-widest mb-1">Previsualización de Código</p>
-                            <h2 className="text-5xl font-black mb-6">{formData.pn || '---'}</h2>
+                            <p className="text-sm font-medium text-white/80 uppercase tracking-widest mb-1">Código de Referencia</p>
+                            <h2 className="text-5xl font-black mb-6">{formData.codigo || 'SIN CÓDIGO'}</h2>
                             <div className="flex flex-col gap-3">
-                                <div className="flex items-center gap-3 text-sm text-white/90">
-                                    <span className="material-symbols-outlined text-sm">schedule</span>
-                                    <span>Fecha: {new Date().toLocaleDateString()}</span>
+                                <button 
+                                    onClick={handleOpenCodeModal}
+                                    className="flex items-center gap-2 w-fit px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-bold transition-all"
+                                >
+                                    <span className="material-symbols-outlined text-sm">add_circle</span>
+                                    {formData.codigo ? 'Cambiar Código' : 'Asignar Código'}
+                                </button>
+                                <div className="flex items-center gap-3 text-sm text-white/90 mt-2">
+                                    <span className="material-symbols-outlined text-sm">inventory_2</span>
+                                    <span>PN: {formData.pn || '---'}</span>
                                 </div>
-                                {editingProduct && (
-                                    <div className="flex items-center gap-3 text-sm text-white/90">
-                                        <span className="material-symbols-outlined text-sm">edit</span>
-                                        <span>Modo: Edición</span>
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </div>
+                    <CodeSelectionModal 
+                        isOpen={showCodeModal}
+                        onClose={() => setShowCodeModal(false)}
+                        onSelect={(codigo) => setFormData(prev => ({ ...prev, codigo }))}
+                    />
                 </div>
             </div>
         </main>

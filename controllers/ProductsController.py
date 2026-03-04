@@ -9,7 +9,7 @@ def get_categories():
         result = DB.GETDB(query)
         return result if result is not None else []
     except Exception as e:
-        return JSONResponse(status_code=500, content={"Error": str(e)})
+        return JSONResponse(status_code=500, content={"detail": str(e)})
 
 def get_products(page: int = 1, limit: int = 10, search: str = None, category: str = "all"):
     try:
@@ -23,8 +23,8 @@ def get_products(page: int = 1, limit: int = 10, search: str = None, category: s
         
         if search:
             search_param = f"%{search}%"
-            where_clauses.append("(p.pn LIKE %s OR p.marca LIKE %s OR p.modelo LIKE %s OR p.description1 LIKE %s OR p.description2 LIKE %s OR p.description3 LIKE %s)")
-            params.extend([search_param] * 6)
+            where_clauses.append("(p.pn LIKE %s OR p.codigo LIKE %s OR p.marca LIKE %s OR p.modelo LIKE %s OR p.description1 LIKE %s OR p.description2 LIKE %s OR p.description3 LIKE %s)")
+            params.extend([search_param] * 7)
 
         where_sql = " WHERE " + " AND ".join(where_clauses) if where_clauses else ""
         
@@ -53,14 +53,14 @@ def get_products(page: int = 1, limit: int = 10, search: str = None, category: s
             "total_pages": (total + limit - 1) // limit
         }
     except Exception as e:
-        return JSONResponse(status_code=500, content={"Error": str(e)})
+        return JSONResponse(status_code=500, content={"detail": str(e)})
 
 def save_product(data: dict):
     try:
         query = """
             INSERT INTO products 
-            (pn, description1, description2, description3, price, um, profile, marca, modelo, category, stock, precioOC)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (pn, description1, description2, description3, price, um, profile, marca, modelo, category, stock, precioOC, codigo)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         # Limpiar y convertir UM a JSON
         um_raw = data.get('um', '')
@@ -79,15 +79,21 @@ def save_product(data: dict):
             data.get('modelo'),
             data.get('category'),
             data.get('stock'),
-            data.get('precioOC')
+            data.get('precioOC'),
+            data.get('codigo')
         )
         success = DB.POSTDB(query, params)
         if success:
+            # Sincronizar PNs en la tabla codes
+            update_code_pns(data.get('codigo'))
             return {"message": "Producto guardado exitosamente"}
         else:
-            return JSONResponse(status_code=500, content={"Error": "Error al guardar en la base de datos"})
+            return JSONResponse(status_code=500, content={"detail": "Error al guardar en la base de datos"})
     except Exception as e:
-        return JSONResponse(status_code=500, content={"Error": str(e)})
+        error_msg = str(e)
+        if "1062" in error_msg:
+            return JSONResponse(status_code=400, content={"detail": f"El número de parte (PN) '{data.get('pn')}' ya existe en el sistema."})
+        return JSONResponse(status_code=500, content={"detail": error_msg})
 
 def update_product(data: dict):
     try:
@@ -99,10 +105,15 @@ def update_product(data: dict):
         # Usamos original_pn para identificar el registro, permitiendo editar el campo pn real
         target_pn = data.get('original_pn') or data.get('pn')
         
+        # Obtener el código anterior para actualizar su lista de PNs después
+        old_codigo_query = "SELECT codigo FROM products WHERE pn = %s"
+        old_codigo_res = DB.GETDB(old_codigo_query, (target_pn,))
+        old_codigo = old_codigo_res[0]['codigo'] if old_codigo_res else None
+
         query = """
             UPDATE products 
             SET pn=%s, description1=%s, description2=%s, description3=%s, price=%s, um=%s, 
-                profile=%s, marca=%s, modelo=%s, category=%s, stock=%s, precioOC=%s
+                profile=%s, marca=%s, modelo=%s, category=%s, stock=%s, precioOC=%s, codigo=%s
             WHERE pn = %s
         """
         params = (
@@ -118,16 +129,25 @@ def update_product(data: dict):
             data.get('category'),
             data.get('stock'),
             data.get('precioOC'),
+            data.get('codigo'),
             target_pn
         )
             
         success = DB.POSTDB(query, params)
         if success:
+            # Sincronizar PNs para el código nuevo
+            update_code_pns(data.get('codigo'))
+            # Sincronizar PNs para el código anterior (por si cambió)
+            if old_codigo and old_codigo != data.get('codigo'):
+                update_code_pns(old_codigo)
             return {"message": "Producto actualizado exitosamente"}
         else:
-            return JSONResponse(status_code=500, content={"Error": "No se encontró el producto o no hubo cambios"})
+            return JSONResponse(status_code=500, content={"detail": "No se encontró el producto o no hubo cambios"})
     except Exception as e:
-        return JSONResponse(status_code=500, content={"Error": str(e)})
+        error_msg = str(e)
+        if "1062" in error_msg:
+            return JSONResponse(status_code=400, content={"detail": f"El número de parte (PN) '{data.get('pn')}' ya está en uso por otro producto."})
+        return JSONResponse(status_code=500, content={"detail": error_msg})
 
 def save_category(data: dict):
     try:
@@ -137,9 +157,9 @@ def save_category(data: dict):
         if success:
             return {"message": "Categoría guardada exitosamente"}
         else:
-            return JSONResponse(status_code=500, content={"Error": "Error al guardar la categoría"})
+            return JSONResponse(status_code=500, content={"detail": "Error al guardar la categoría"})
     except Exception as e:
-        return JSONResponse(status_code=500, content={"Error": str(e)})
+        return JSONResponse(status_code=500, content={"detail": str(e)})
 
 def update_category(data: dict):
     try:
@@ -149,9 +169,9 @@ def update_category(data: dict):
         if success:
             return {"message": "Categoría actualizada exitosamente"}
         else:
-            return JSONResponse(status_code=500, content={"Error": "Error al actualizar la categoría"})
+            return JSONResponse(status_code=500, content={"detail": "Error al actualizar la categoría"})
     except Exception as e:
-        return JSONResponse(status_code=500, content={"Error": str(e)})
+        return JSONResponse(status_code=500, content={"detail": str(e)})
 
 def delete_category(id_category: int):
     try:
@@ -159,13 +179,60 @@ def delete_category(id_category: int):
         check_query = "SELECT COUNT(*) as total FROM products WHERE category = %s"
         check_res = DB.GETDB(check_query, (id_category,))
         if check_res and check_res[0]['total'] > 0:
-            return JSONResponse(status_code=400, content={"Error": "No se puede eliminar la categoría porque tiene productos asociados. Reasigna los productos a otra categoría primero."})
+            return JSONResponse(status_code=400, content={"detail": "No se puede eliminar la categoría porque tiene productos asociados. Reasigna los productos a otra categoría primero."})
 
         query = "DELETE FROM categories WHERE id_category = %s"
         success = DB.DELDB(query, (id_category,))
         if success:
             return {"message": "Categoría eliminada exitosamente"}
         else:
-            return JSONResponse(status_code=500, content={"Error": "Error al eliminar la categoría"})
+            return JSONResponse(status_code=500, content={"detail": "Error al eliminar la categoría"})
     except Exception as e:
-        return JSONResponse(status_code=500, content={"Error": str(e)})
+        return JSONResponse(status_code=500, content={"detail": str(e)})
+def get_codes():
+    try:
+        query = "SELECT * FROM codes ORDER BY codigo ASC"
+        result = DB.GETDB(query)
+        return result if result is not None else []
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"detail": str(e)})
+
+def save_code(data: dict):
+    try:
+        codigo = str(data.get('codigo', '')).strip().upper()
+        
+        if len(codigo) > 10:
+            return JSONResponse(status_code=400, content={"detail": "El código no puede tener más de 10 caracteres."})
+        
+        if not codigo:
+            return JSONResponse(status_code=400, content={"detail": "El código es obligatorio."})
+
+        query = "INSERT INTO codes (codigo, descripcion, PNs) VALUES (%s, %s, %s)"
+        params = (codigo, data.get('descripcion'), '')
+        success = DB.POSTDB(query, params)
+        if success:
+            return {"message": "Código guardado exitosamente"}
+        else:
+            return JSONResponse(status_code=500, content={"detail": "Error al guardar el código"})
+    except Exception as e:
+        error_msg = str(e)
+        if "1062" in error_msg:
+             return JSONResponse(status_code=400, content={"detail": f"El código '{data.get('codigo')}' ya existe."})
+        return JSONResponse(status_code=500, content={"detail": error_msg})
+
+def update_code_pns(codigo: str):
+    try:
+        # Obtener todos los PNs asociados a este código
+        query_pns = "SELECT pn FROM products WHERE codigo = %s"
+        pns_res = DB.GETDB(query_pns, (codigo,))
+        if pns_res:
+            pns_list = [row['pn'] for row in pns_res]
+            pns_str = "|".join(pns_list)
+        else:
+            pns_str = ""
+        
+        # Actualizar la tabla codes
+        update_query = "UPDATE codes SET PNs = %s WHERE codigo = %s"
+        DB.POSTDB(update_query, (pns_str, codigo))
+    except Exception as e:
+        print(f"Error updating code PNs: {e}")

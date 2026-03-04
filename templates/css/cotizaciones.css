@@ -272,6 +272,23 @@ table td {
   background-color: rgb(192, 230, 245);
 }
 
+/* Estilos específicos para DDV */
+.ddv-mode table td {
+  border-color: #000000 !important;
+}
+
+.ddv-mode .table-cotizacion thead td {
+  background-color: #FF0000 !important;
+  border-color: #000000 !important;
+  color: #FFFF00 !important;
+  font-weight: bold;
+}
+
+.ddv-mode .bg-blue {
+  background-color: #FFFF00 !important;
+  color: #000000 !important;
+}
+
 input,
 select,
 textarea {
