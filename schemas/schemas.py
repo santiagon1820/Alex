@@ -287,3 +287,85 @@ class Logout200(BaseModel):
             }
         }
     }
+
+class TicketGenerate200(BaseModel):
+    message: str
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "message": "Ticket generado exitosamente"
+            }
+        }
+    }
+
+class TicketJoin200(BaseModel):
+    message: str
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "message": "Te has unido al ticket exitosamente"
+            }
+        }
+    }
+
+class TicketJoin400(BaseModel):
+    Error: str
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "Error": "Problema al unirse al ticket"
+            }
+        }
+    }
+    
+class TicketJoin404(BaseModel):
+    Error: str
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "Error": "Ticket no encontrado"
+            }
+        }
+    }
+
+class SendMessage400(BaseModel):
+    Error: str
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "Error": "El mensaje no pudo enviarse"
+            }
+        }
+    }
+
+class SendMessage200(BaseModel):
+    message: str
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "message": "Mensaje enviado exitosamente"
+            }
+        }
+    }
+
+class UploadFile200(BaseModel):
+    message: str
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "message": "Archivo subido exitosamente",
+                "url": "https://s3.example.com/"
+            }
+        }
+    }
+
+class UploadFile400(BaseModel):
+    Error: str
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "Error": "Extensión no permitida. Use: {'.pdf', '.txt', '.png', '.docx', '.jpeg', '.jpg', '.doc'}"
+            }
+        }
+    }
+

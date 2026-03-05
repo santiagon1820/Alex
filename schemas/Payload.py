@@ -82,3 +82,18 @@ class Category(BaseModel):
 class Code(BaseModel):
     codigo: str
     descripcion: str
+
+class Ticket(BaseModel):
+    email: Optional[str] = "email@example.com"
+    type_ticket: int = 1
+    subject: str
+
+class TicketJoin(BaseModel):
+    ticket_id: int = 1
+
+class SendMessage(BaseModel):
+    ticket_id: int = 1
+    type: int = 1
+    email: Optional[str] = "email@example.com"
+    message: str = ""
+    files: Optional[str] = "url1|url2|url3"

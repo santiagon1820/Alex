@@ -17,7 +17,8 @@ import controllers.VerifyTokenController as VerifyTokenController
 import controllers.CotizacionesController as CotizacionesController
 import controllers.ProductsController as ProductsController
 import controllers.PermissionsController as PermissionsController
-
+import controllers.TicketsController as TicketsController
+import controllers.UploadsController as UploadsController
 
 # Importamos schemas
 import schemas.Payload as schemasPayload
@@ -127,6 +128,21 @@ def read_seguimiento(is_logged_in: dict = Depends(VerifyTokenController.check_is
         return RedirectResponse(url="/panel", status_code=302)
 
     response = FileResponse("templates/seguimiento.html")
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+@app.get("/tickets", include_in_schema=False)
+def read_tickets(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    if not is_logged_in:
+        return RedirectResponse(url="/login", status_code=302)
+
+    # Verificar permisos
+    if not PermissionsController.has_permission(is_logged_in.get("type", 0), "/tickets"):
+        return RedirectResponse(url="/panel", status_code=302)
+
+    response = FileResponse("templates/tickets.html")
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
@@ -493,3 +509,59 @@ def get_codes():
 )
 def save_code(data: schemasPayload.Code):
     return ProductsController.save_code(data.dict())
+
+@app.post(
+    "/api/generateTicket",
+    tags=["Tickets"],
+    summary="Generar un ticket",
+    responses={
+        200: {"model": Schemas.InventoryMessage200},
+        401: {"model": Schemas.VerifySession401},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+def generate_ticket(data: schemasPayload.Ticket, token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    return TicketsController.generate_ticket(data.dict(), token_data)
+
+@app.post(
+    "/api/joinTicket/{ticket_id}",
+    tags=["Tickets"],
+    summary="Unirse a un ticket",
+    responses={
+        200: {"model": Schemas.TicketJoin200},
+        401: {"model": Schemas.VerifySession401},
+        400: {"model": Schemas.TicketJoin400},
+        404: {"model": Schemas.TicketJoin404},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+def join_ticket(ticket_id: int, token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    return TicketsController.join_ticket(token_data, ticket_id)
+
+@app.post(
+    "/api/sendMessage",
+    tags=["Tickets"],
+    summary="Enviar un mensaje",
+    responses={
+        200: {"model": Schemas.SendMessage200},
+        401: {"model": Schemas.VerifySession401},
+        400: {"model": Schemas.SendMessage400},
+        404: {"model": Schemas.TicketJoin404},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+def send_message(data: schemasPayload.SendMessage, token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    return TicketsController.send_message(data.dict(), token_data)
+
+@app.post(
+    "/api/uploadFile",
+    tags=["Uploads"],
+    summary="Subir un archivo",
+    responses={
+        200: {"model": Schemas.UploadFile200},
+        400: {"model": Schemas.UploadFile400},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+def upload_file(file: UploadFile = File(...)):
+    return UploadsController.upload_file(file)

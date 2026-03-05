@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tickets · inicio</title>
+  <!-- Estilo minimalista e iconos (Lucide) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="/css/tickets.css">
+</head>
+<body>
+  <div class="card">
+    <!-- fila superior: icono + título y botón inicio -->
+    <div class="header-row">
+      <div class="title-section">
+        <i class="fas fa-ticket-alt" style="transform: rotate(-5deg);"></i>
+        <h1>tickets</h1>
+      </div>
+      <a href="/panel" class="btn-inicio">
+        <i class="fas fa-home"></i> 
+        <span>Inicio</span>
+      </a>
+    </div>
+
+    <!-- separador sutil que mantiene minimalismo -->
+    <div class="separator"></div>
+
+    <!-- dos opciones principales: Administracion / Usuario (enlaces simbólicos) -->
+    <div class="options-grid">
+      <!-- Administracion tarjeta -->
+      <a href="/tickets/admin" class="option-card">
+        <div class="icon-wrapper">
+          <i class="fas fa-building"></i>
+        </div>
+        <h2>Administración</h2>
+        <span class="badge-role">Gestión de Tickets</span>
+      </a>
+
+      <!-- Usuario tarjeta -->
+      <a href="/tickets/usuario" class="option-card">
+        <div class="icon-wrapper">
+          <i class="fas fa-user-circle"></i>
+        </div>
+        <h2>Usuario</h2>
+        <span class="badge-role">Abrir Ticket</span>
+      </a>
+    </div>
+
+    <!-- detalle decorativo sin distraer (refuerza la idea de tickets) -->
+    <div class="footnote">
+      <i class="fas fa-circle" style="font-size: 0.4rem;"></i>
+      <span>MGLAB</span>
+      <i class="fas fa-circle" style="font-size: 0.4rem;"></i>
+    </div>
+  </div>
+</body>
+</html>

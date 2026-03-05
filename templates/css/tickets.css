@@ -1,0 +1,217 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  color: #0f172a;
+}
+
+/* contenedor principal con elegancia y suavidad */
+.card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: 2.5rem;
+  box-shadow:
+    0 20px 35px -8px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 780px;
+  transition: all 0.2s ease;
+}
+
+/* encabezado con el botón inicio y título integrados */
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2.2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.title-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.title-section i {
+  font-size: 2rem;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 0.6rem;
+  border-radius: 1.2rem;
+}
+
+h1 {
+  font-weight: 550;
+  font-size: 2.2rem;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #1e293b, #2d3c53);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* botón inicio minimalista con icono */
+.btn-inicio {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 3rem;
+  padding: 0.7rem 1.8rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #1e293b;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  transition: all 0.2s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+  backdrop-filter: blur(2px);
+}
+
+.btn-inicio i {
+  font-size: 1.1rem;
+  color: #3b82f6;
+}
+
+.btn-inicio:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 18px -6px rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
+}
+
+/* separador sutil */
+.separator {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
+  margin: 1.8rem 0 2.2rem 0;
+}
+
+/* opciones principales: administración y usuario */
+.options-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.8rem;
+  justify-content: center;
+}
+
+.option-card {
+  flex: 1 1 200px;
+  min-width: 200px;
+  background: white;
+  border-radius: 2rem;
+  padding: 2rem 1.2rem;
+  text-align: center;
+  text-decoration: none;
+  color: #0f172a;
+  border: 1px solid rgba(203, 213, 225, 0.4);
+  transition: all 0.25s ease;
+  box-shadow: 0 12px 22px -14px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(2px);
+}
+
+.option-card:hover {
+  border-color: #b1c5db;
+  box-shadow: 0 25px 30px -14px rgba(59, 130, 246, 0.18);
+  transform: scale(1.02) translateY(-4px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.icon-wrapper {
+  background: #f1f5f9;
+  border-radius: 2rem;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.2rem auto;
+  transition: background 0.2s;
+}
+
+.option-card:hover .icon-wrapper {
+  background: #e6f0ff;
+}
+
+.icon-wrapper i {
+  font-size: 2.8rem;
+  color: #334155;
+  transition: color 0.2s;
+}
+
+.option-card:hover .icon-wrapper i {
+  color: #2563eb;
+}
+
+.option-card h2 {
+  font-size: 1.7rem;
+  font-weight: 450;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.35rem;
+}
+
+.badge-role {
+  background: #f1f5f9;
+  border-radius: 30px;
+  padding: 0.3rem 1rem;
+  display: inline-block;
+  font-size: 0.85rem;
+  color: #475569;
+  font-weight: 500;
+  border: 1px solid #e2e8f0;
+}
+
+/* pie de página sutil */
+.footnote {
+  margin-top: 2.5rem;
+  font-size: 0.85rem;
+  color: #8193aa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.footnote i {
+  color: #3b82f6;
+  font-size: 0.75rem;
+}
+
+/* responsive delicado */
+@media (max-width: 500px) {
+  .card {
+    padding: 2rem 1.2rem;
+  }
+  h1 {
+    font-size: 1.9rem;
+  }
+  .btn-inicio {
+    padding: 0.5rem 1.3rem;
+    font-size: 1rem;
+  }
+}

@@ -13,7 +13,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 import threading
 import time
-from fastapi import UploadFile, File, Form, HTTPException
 
 # Estado global para controlar el flujo: GetFolio -> Render -> Save
 # Usamos un diccionario para bloquear por empresa
