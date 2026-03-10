@@ -1,7 +1,8 @@
 import models.db as DB
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
+import asyncio
+import json
 
-# Función para generar ticket
 def generate_ticket(data, token_data):    
     try:
         type_ticket = data.get("type_ticket")
@@ -9,7 +10,6 @@ def generate_ticket(data, token_data):
         user_val = None
 
         if type_ticket == 2:
-            # Ticket interno: Usar username de la cookie (token_data)
             if not token_data:
                 return JSONResponse(
                     status_code=401,
@@ -17,7 +17,6 @@ def generate_ticket(data, token_data):
                 )
             user_val = token_data.get("username")
         elif type_ticket == 1:
-            # Ticket externo (cliente): Usar email del payload
             user_val = data.get("email")
             if not user_val:
                 return JSONResponse(
@@ -30,8 +29,6 @@ def generate_ticket(data, token_data):
                 content={"Error": "Tipo de ticket inválido"}
             )
 
-        # Inserción en la base de datos
-        # Tabla: id, type, user, subject, status, agents, created_at
         query = "INSERT INTO tickets (type, user, subject) VALUES (%s, %s, %s)"
         DB.POSTDB(query, (type_ticket, user_val, subject))
 
@@ -45,7 +42,6 @@ def generate_ticket(data, token_data):
             content={"Error": f"Error interno del servidor: {str(e)}"}
         )
 
-# Función para unirse a un ticket
 def join_ticket(data, ticket_id):
     try:
         if not ticket_id:
@@ -54,14 +50,12 @@ def join_ticket(data, ticket_id):
                 content={"Error": "El ID del ticket es obligatorio"}
             )
 
-        # Verificar que hay sesion activa = data
         if not data:
             return JSONResponse(
                 status_code=401,
                 content={"Error": "Token inválido o expirado"}
             )
 
-        # Verificar que el agente no este en el ticket
         query = "SELECT agents FROM tickets WHERE id = %s"
         result = DB.GETDB(query, (ticket_id,))
         if result:
@@ -74,7 +68,6 @@ def join_ticket(data, ticket_id):
                         content={"Error": "Ya te encuentras en el ticket"}
                     )
         
-        # Verificar que el ticket exista
         query = "SELECT * FROM tickets WHERE id = %s"
         result = DB.GETDB(query, (ticket_id,))
         if not result:
@@ -83,13 +76,10 @@ def join_ticket(data, ticket_id):
                 content={"Error": "Ticket no encontrado"}
             )
         
-        # Verificar si se puede unir o no al ticket
-        # 1 Comprobamos si tenemos un ticket tipo 1 o 2 haciendo una consulta a la BD
         query = "SELECT type FROM tickets WHERE id = %s"
         result = DB.GETDB(query, (ticket_id,))
         type_ticket = result[0].get("type", "")
 
-        # Si el ticket es tipo 1 todos los igual o mayor a 1 se pueden unir y si es 2 solo los mayores o igual a 2 lo pueden hacer
         if type_ticket == 1:
             if data.get("type") < 1:
                 return JSONResponse(
@@ -116,43 +106,43 @@ def join_ticket(data, ticket_id):
             content={"Error": f"Error interno del servidor: {str(e)}"}
         )
 
-# Función para mandar mensaje al ticket
 def send_message(data, token_data):
     try:
-        # Definir variables
         ticket_id = data.get("ticket_id")
         message = data.get("message")
         files = data.get("files")
         
-        # Obtener quienes tienen acceso al ticket seleccionando user y agents
-        query = "SELECT user, agents FROM tickets WHERE id = %s"
+        query = "SELECT user, agents, status FROM tickets WHERE id = %s"
         result = DB.GETDB(query, (ticket_id,))
         user_ticket = result[0].get("user", "")
         agents = result[0].get("agents", "")
+        status = result[0].get("status", "")
         user = None
-        
-        # Verificar que el ticket exista
+
         if not result:
             return JSONResponse(
                 status_code=404,
                 content={"Error": "Ticket no encontrado"}
             )
 
-        # Verificar si tiene permiso para enviar mensaje
         if data.get("type") == 1:
-            # Es cliente
             user = data.get("email")
-            # Verificar que el cliente este en el ticket
             if user != user_ticket:
                 return JSONResponse(
                     status_code=400,
                     content={"Error": "No tienes permisos para enviar mensajes al ticket"}
                 )
         elif data.get("type") == 2:
-            # Es agente
             user = token_data.get("username")
-            # Verificar que el agente este en el ticket
             if user not in agents.split("|"):
+                return JSONResponse(
+                    status_code=400,
+                    content={"Error": "No tienes permisos para enviar mensajes al ticket"}
+                )
+
+        elif data.get("type") == 3:
+            user = token_data.get("username")
+            if user != user_ticket:
                 return JSONResponse(
                     status_code=400,
                     content={"Error": "No tienes permisos para enviar mensajes al ticket"}
@@ -163,14 +153,18 @@ def send_message(data, token_data):
                 content={"Error": "Tipo de usuario inválido"}
             )
 
-        # Verificar que el mensaje no este vacio
         if not message or not message.strip():
             return JSONResponse(
                 status_code=400,
                 content={"Error": "El mensaje no puede estar vacio"}
             )
         
-        # Insertar mensaje
+        if status == "closed":
+            return JSONResponse(
+                status_code=400,
+                content={"Error": "El ticket esta cerrado"}
+            )
+        
         query = "INSERT INTO ticket_messages (ticket_id, user, message, files) VALUES (%s, %s, %s, %s)"
         DB.POSTDB(query, (ticket_id, user, message, files))
         
@@ -179,9 +173,167 @@ def send_message(data, token_data):
             content={"message": "Mensaje enviado exitosamente"}
         )
 
-        
     except Exception as e:
         return JSONResponse(
             status_code=500,
             content={"Error": f"Error interno del servidor: {str(e)}"}
         )
+
+async def get_messages_sse(data, token_data):
+    try:
+        query = "SELECT user, agents FROM tickets WHERE id = %s"
+        result = await asyncio.to_thread(DB.GETDB, query, (data.get("ticket_id"),))
+        if not result:
+            return JSONResponse(status_code=404, content={"Error": "Ticket no encontrado"})
+        
+        user_ticket = result[0].get("user", "")
+        agents = result[0].get("agents", "") or ""
+
+        is_participant = False
+        user_type = data.get("user_type")
+        current_user = None
+        
+        if user_type == 1:
+            current_user = data.get("email")
+            if data.get("email") == user_ticket:
+                is_participant = True
+        elif user_type == 2:
+            current_user = token_data.get("username")
+            if token_data.get("username") in agents.split("|"):
+                is_participant = True
+        elif user_type == 3:
+            current_user = token_data.get("username")
+            if token_data.get("username") == user_ticket:
+                is_participant = True
+        
+        if not is_participant:
+            return JSONResponse(status_code=403, content={"Error": "No tienes permisos para ver este chat"})
+
+        async def event_generator():
+            yield f"data: {json.dumps({'current_user': current_user})}\n\n"
+            
+            last_id = 0
+            try:
+                while True:
+                    try:
+                        query_msgs = "SELECT id, user, message, files, created_at FROM ticket_messages WHERE ticket_id = %s AND id > %s ORDER BY id ASC"
+                        messages = await asyncio.to_thread(DB.GETDB, query_msgs, (data.get("ticket_id"), last_id))
+                        
+                        if messages:
+                            for msg in messages:
+                                if 'created_at' in msg and msg['created_at']:
+                                    msg['created_at'] = str(msg['created_at'])
+                                
+                                last_id = msg['id']
+                                yield f"data: {json.dumps(msg)}\n\n"
+                        
+                        await asyncio.sleep(2)
+                    except asyncio.CancelledError:
+                        break
+                    except Exception as e:
+                        try:
+                            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+                        except:
+                            pass
+                        break
+            except GeneratorExit:
+                pass
+
+        return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"Error": str(e)})
+
+def get_tickets_by_user(email, ticket_type, token_data):
+    try:
+        if ticket_type == 1:
+            if not email:
+                return JSONResponse(status_code=400, content={"Error": "El email es obligatorio para tickets externos"})
+            query = "SELECT id, user, subject, status, type FROM tickets WHERE user = %s and type = 1"
+            result = DB.GETDB(query, (email,))
+        elif ticket_type == 2:
+            user = token_data.get("username")
+            if not user:
+                return JSONResponse(status_code=401, content={"Error": "Token inválido o expirado"})
+            query = "SELECT id, user, subject, status, type FROM tickets WHERE user = %s and type = 2"
+            result = DB.GETDB(query, (user,))
+        else:
+            return JSONResponse(status_code=400, content={"Error": "Tipo de ticket inválido"})
+
+        if not result:
+            return JSONResponse(status_code=404, content={"Error": "Tickets no encontrados"})
+        
+        return JSONResponse(status_code=200, content=result)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"Error": str(e)})
+
+def get_tickets(ticket_type, token_data):
+    try:
+        if not token_data:
+            return JSONResponse(status_code=401, content={"Error": "Token inválido o expirado"})
+
+        if ticket_type == 1:
+            if token_data.get("type") < 1:
+                return JSONResponse(status_code=403, content={"Error": "No tienes permisos para ver todos los tickets"})
+            query = "SELECT id, user, subject, status, type FROM tickets WHERE type = 1"
+            result = DB.GETDB(query, ())
+            if not result:
+                return JSONResponse(status_code=404, content={"Error": "Tickets no encontrado"})
+            return JSONResponse(status_code=200, content=result)
+        elif ticket_type == 2:
+            if token_data.get("type") < 2:
+                return JSONResponse(status_code=403, content={"Error": "No tienes permisos para ver todos los tickets"})
+            query = "SELECT id, user, subject, status, type FROM tickets WHERE type = 2"
+            result = DB.GETDB(query, ())
+            if not result:
+                return JSONResponse(status_code=404, content={"Error": "Tickets no encontrado"})
+            return JSONResponse(status_code=200, content=result)
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"Error": str(e)})
+
+def change_status(data, token_data):
+    try:
+        query = "SELECT status, type FROM tickets WHERE id = %s"
+        result = DB.GETDB(query, (data.get("ticket_id"),))
+        if not result:
+            return JSONResponse(status_code=404, content={"Error": "Ticket no encontrado"})
+        
+        real_ticket_type = result[0].get("type")
+        user_type = token_data.get("type")
+
+        if data.get("status") not in ["open", "closed"]:
+            return JSONResponse(status_code=400, content={"Error": "Status inválido"})
+        
+        if real_ticket_type == 2 and user_type < 2:
+            return JSONResponse(status_code=403, content={"Error": "No tienes permisos para cambiar el status de tickets internos"})
+        
+        query = "UPDATE tickets SET status = %s WHERE id = %s"
+        DB.PUTDB(query, (data.get("status"), data.get("ticket_id")))
+        
+        return JSONResponse(status_code=200, content={"message": "Status cambiado exitosamente"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"Error": str(e)})
+        result = DB.GETDB(query, (data.get("ticket_id"),))
+        if not result:
+            return JSONResponse(status_code=404, content={"Error": "Ticket no encontrado"})
+        
+        real_ticket_type = result[0].get("type")
+        user_type = token_data.get("type")
+
+        # Verificar que el status es válido
+        if data.get("status") not in ["open", "closed"]:
+            return JSONResponse(status_code=400, content={"Error": "Status inválido"})
+        
+        # Lógica de permisos:
+        # Si el ticket es tipo 2 (interno), el usuario debe ser tipo >= 2
+        if real_ticket_type == 2 and user_type < 2:
+            return JSONResponse(status_code=403, content={"Error": "No tienes permisos para cambiar el status de tickets internos"})
+        
+        # Si el ticket es tipo 1, o si es tipo 2 y el usuario es agente/admin, permitimos el cambio
+        query = "UPDATE tickets SET status = %s WHERE id = %s"
+        DB.PUTDB(query, (data.get("status"), data.get("ticket_id")))
+        
+        return JSONResponse(status_code=200, content={"message": "Status cambiado exitosamente"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"Error": str(e)})

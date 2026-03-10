@@ -369,3 +369,67 @@ class UploadFile400(BaseModel):
         }
     }
 
+class Chat200(BaseModel):
+    data: dict
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "data": {"id": 1, "user": "email@example.com", "message": "hola", "files": None, "created_at": "2026-03-05 19:34:12"}
+            }
+        }
+    }
+
+class Chat403(BaseModel):
+    Error: str
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "Error": "No tienes permisos para obtener los mensajes"
+            }
+        }
+    }
+
+class TicketByUser200(BaseModel):
+    subject: str
+    status: str
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "id": 1,
+                "user": "user||email@example.com",
+                "subject": "Ticket 1",
+                "status": "open",
+                "type": 1
+            }
+        }
+    }
+
+class Ticket404(BaseModel):
+    Error: str
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "Error": "Tickets no encontrados"
+            }
+        }
+    }
+
+class TicketChangeStatus200(BaseModel):
+    message: str
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "message": "Status cambiado exitosamente"
+            }
+        }
+    }
+
+class TicketChangeStatus400(BaseModel):
+    Error: str
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "Error": "Problema al cambiar status"
+            }
+        }
+    }

@@ -92,8 +92,45 @@ class TicketJoin(BaseModel):
     ticket_id: int = 1
 
 class SendMessage(BaseModel):
-    ticket_id: int = 1
-    type: int = 1
-    email: Optional[str] = "email@example.com"
-    message: str = ""
-    files: Optional[str] = "url1|url2|url3"
+    ticket_id: int
+    type: int
+    email: Optional[str] = None
+    message: str
+    files: Optional[str] = None
+    model_config = {
+        "json_schema_extra":{
+            "example":{
+                "ticket_id":1,
+                "type":1,
+                "email":"email@example.com",
+                "message":"Hola",
+                "files":"url1|url2|url3"
+            }
+        }
+    }
+
+class Chat(BaseModel):
+    ticket_id: int
+    type: int
+    model_config = {
+        "json_schema_extra":{
+            "example":{
+                "ticket_id":1,
+                "type":1
+            }
+        }
+    }
+
+class TicketChangeStatus(BaseModel):
+    ticket_id: int
+    type: int
+    status: str
+    model_config = {
+        "json_schema_extra":{
+            "example":{
+                "ticket_id":1,
+                "type":1,
+                "status":"closed"
+            }
+        }
+    }

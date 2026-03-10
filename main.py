@@ -19,6 +19,7 @@ import controllers.ProductsController as ProductsController
 import controllers.PermissionsController as PermissionsController
 import controllers.TicketsController as TicketsController
 import controllers.UploadsController as UploadsController
+import controllers.GmailController as GmailController
 
 # Importamos schemas
 import schemas.Payload as schemasPayload
@@ -147,6 +148,55 @@ def read_tickets(is_logged_in: dict = Depends(VerifyTokenController.check_is_log
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     return response
+
+@app.get("/tickets/usuario", include_in_schema=False)
+def read_tickets_user(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    if not is_logged_in:
+        return RedirectResponse(url="/login", status_code=302)
+
+    # Verificar permisos
+    if not PermissionsController.has_permission(is_logged_in.get("type", 0), "/tickets/usuario"):
+        return RedirectResponse(url="/tickets", status_code=302)
+
+    response = FileResponse("templates/tickets_user.html")
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+@app.get("/tickets/admin", include_in_schema=False)
+def read_tickets_admin(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    if not is_logged_in:
+        return RedirectResponse(url="/login", status_code=302)
+
+    # Verificar permisos
+    if not PermissionsController.has_permission(is_logged_in.get("type", 0), "/tickets/admin"):
+        return RedirectResponse(url="/tickets", status_code=302)
+
+    response = FileResponse("templates/tickets_admin.html")
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+@app.get("/panel/garantias", include_in_schema=False)
+def read_panel_garantias(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    if not is_logged_in:
+        return RedirectResponse(url="/login", status_code=302)
+
+    # Verificar permisos
+    if not PermissionsController.has_permission(is_logged_in.get("type", 0), "/panel/garantias"):
+        return RedirectResponse(url="/panel", status_code=302)
+
+    response = FileResponse("templates/garantias_admin.html")
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+@app.get("/garantias", include_in_schema=False)
+def read_garantias(correo: str = None):
+    return FileResponse("templates/garantias.html")
 # ----------- BACKEND ----------- #
 # Endpoint Login
 @app.post(
@@ -553,6 +603,26 @@ def join_ticket(ticket_id: int, token_data: dict = Depends(VerifyTokenController
 def send_message(data: schemasPayload.SendMessage, token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
     return TicketsController.send_message(data.dict(), token_data)
 
+@app.get(
+    "/api/chat",
+    tags=["Tickets"],
+    summary="Obtener mensajes del chat",
+    responses={
+        200: {"model": Schemas.Chat200},
+        401: {"model": Schemas.VerifySession401},
+        403: {"model": Schemas.InternalServerError},
+        404: {"model": Schemas.TicketJoin404},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+async def get_messages_sse(ticket_id: int, user_type: int, email: str = None, token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    data = {
+        "ticket_id": ticket_id,
+        "user_type": user_type,
+        "email": email
+    }
+    return await TicketsController.get_messages_sse(data, token_data)
+
 @app.post(
     "/api/uploadFile",
     tags=["Uploads"],
@@ -563,5 +633,46 @@ def send_message(data: schemasPayload.SendMessage, token_data: dict = Depends(Ve
         500: {"model": Schemas.InternalServerError}
     }
 )
-def upload_file(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...)):
     return UploadsController.upload_file(file)
+
+@app.get(
+    "/api/getTicketsByUser",
+    tags=["Tickets"],
+    summary="Obtener tickets por usuario",
+    responses={
+        200: {"model": List[Schemas.TicketByUser200]},  
+        404: {"model": Schemas.TicketJoin404},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+def get_tickets_by_user(ticket_type: int, email: str = None, token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    return TicketsController.get_tickets_by_user(email, ticket_type, token_data)
+
+@app.get(
+    "/api/getTickets",
+    tags=["Tickets"],
+    summary="Obtener tickets",
+    responses={
+        200: {"model": List[Schemas.TicketByUser200]},  
+        404: {"model": Schemas.Ticket404},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+def get_tickets(ticket_type: int, token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
+        return TicketsController.get_tickets(ticket_type, token_data)
+
+@app.post(
+    "/api/changeStatus",
+    tags=["Tickets"],
+    summary="Cambiar status de un ticket",
+    responses={
+        200: {"model": Schemas.TicketChangeStatus200},
+        401: {"model": Schemas.VerifySession401},
+        400: {"model": Schemas.TicketChangeStatus400},
+        404: {"model": Schemas.TicketJoin404},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+def change_status(data: schemasPayload.TicketChangeStatus, token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    return TicketsController.change_status(data.dict(), token_data)

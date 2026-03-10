@@ -82,7 +82,9 @@
             href="/panel/seguimiento"
             style="display: none"
           >
-            <span class="material-symbols-outlined text-[20px] text-gray-500">analytics</span>
+            <span class="material-symbols-outlined text-[20px] text-gray-500"
+              >analytics</span
+            >
             <span class="text-sm font-medium">Seguimiento</span>
           </a>
           <a
@@ -127,7 +129,7 @@
           </a>
           <a
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            href="#"
+            href="/panel/garantias"
             style="display: none"
           >
             <span class="material-symbols-outlined text-[20px] text-gray-500"
@@ -144,16 +146,6 @@
               >inventory_2</span
             >
             <span class="text-sm font-medium">Plantillas productos</span>
-          </a>
-          <a
-            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            href="/tickets"
-            style="display: none"
-          >
-            <span class="material-symbols-outlined text-[20px] text-gray-500"
-              >confirmation_number</span
-            >
-            <span class="text-sm font-medium">Tickets</span>
           </a>
           <a
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -209,19 +201,10 @@
               <span class="material-symbols-outlined text-[22px]"
                 >confirmation_number</span
               >
-              <span class="text-xs font-semibold hidden md:inline">Tickets</span>
-            </a>
-            <button
-              class="p-2 text-gray-500 hover:bg-gray-100 rounded-full flex items-center gap-1.5 transition-colors"
-              title="Manuales"
-            >
-              <span class="material-symbols-outlined text-[22px]"
-                >menu_book</span
-              >
               <span class="text-xs font-semibold hidden md:inline"
-                >Manuales</span
+                >Tickets</span
               >
-            </button>
+            </a>
             <button
               class="p-2 text-danger hover:bg-red-50 rounded-full relative transition-colors"
               title="Alertas"
@@ -476,27 +459,29 @@
     <script>
       async function checkPermissions() {
         try {
-          const res = await fetch('/api/myPermissions');
+          const res = await fetch("/api/myPermissions");
           if (res.ok) {
             const data = await res.json();
             const allowedPages = data.pages || [];
-            
+
             // Mostrar links del sidebar que estén en la lista de permitidos
             // Seleccionamos todos los links dentro del contenedor del sidebar
-            const sidebarLinks = document.querySelectorAll('.fixed.inset-y-0.left-0 a');
-            sidebarLinks.forEach(link => {
-              const href = link.getAttribute('href');
-              
+            const sidebarLinks = document.querySelectorAll(
+              ".fixed.inset-y-0.left-0 a",
+            );
+            sidebarLinks.forEach((link) => {
+              const href = link.getAttribute("href");
+
               // Si es el logo (MG) lo dejamos como está (no tiene display hidden por defecto)
               if (!href) return;
 
               // Si el href está en la lista de permitidos, lo mostramos
               if (allowedPages.includes(href)) {
-                link.style.display = 'flex';
+                link.style.display = "flex";
               }
               // Mantenemos siempre visibles Dashboard e Inicio
-              else if (href === '/panel' || href === '#') {
-                link.style.display = 'flex';
+              else if (href === "/panel" || href === "#") {
+                link.style.display = "flex";
               }
             });
           }
@@ -506,28 +491,28 @@
       }
 
       async function handleLogout() {
-        const btn = document.getElementById('btn-logout');
+        const btn = document.getElementById("btn-logout");
         btn.disabled = true;
-        btn.style.opacity = '0.6';
+        btn.style.opacity = "0.6";
 
         try {
-          const res = await fetch('/api/logout', {
-            method: 'POST',
-            credentials: 'include'
+          const res = await fetch("/api/logout", {
+            method: "POST",
+            credentials: "include",
           });
 
           if (res.ok) {
-            window.location.href = '/';
+            window.location.href = "/";
           } else {
             const data = await res.json();
-            alert(data.Error || 'Error al cerrar sesión');
+            alert(data.Error || "Error al cerrar sesión");
             btn.disabled = false;
-            btn.style.opacity = '1';
+            btn.style.opacity = "1";
           }
         } catch (err) {
-          alert('Error de conexión al cerrar sesión');
+          alert("Error de conexión al cerrar sesión");
           btn.disabled = false;
-          btn.style.opacity = '1';
+          btn.style.opacity = "1";
         }
       }
 
@@ -536,4 +521,3 @@
     </script>
   </body>
 </html>
-
