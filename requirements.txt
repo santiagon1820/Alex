@@ -6,3 +6,4 @@ bcrypt
 pyotp
 boto3
 python-multipart
+requests 

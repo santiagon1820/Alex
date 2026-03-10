@@ -756,7 +756,66 @@ header {
   border-color: rgba(16, 185, 129, 0.35);
 }
 .toast-item.error {
-  border-color: rgba(239, 68, 68, 0.35);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+/* ── GMAIL MODAL ─────────────────────────────────────────────────────────── */
+.modal-gmail {
+  width: 850px;
+  max-width: 95vw;
+  height: 85vh;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.modal-gmail-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+}
+
+.modal-gmail-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.modal-gmail-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-gmail-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.btn-close-modal:hover {
+  background: var(--surface3);
+  color: var(--danger);
 }
 .toast-item.warning {
   background: var(--warning);

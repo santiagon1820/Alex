@@ -275,7 +275,7 @@ def get_tickets(ticket_type, token_data):
         if ticket_type == 1:
             if token_data.get("type") < 1:
                 return JSONResponse(status_code=403, content={"Error": "No tienes permisos para ver todos los tickets"})
-            query = "SELECT id, user, subject, status, type FROM tickets WHERE type = 1"
+            query = "SELECT id, user, subject, status, type, provider_email FROM tickets WHERE type = 1"
             result = DB.GETDB(query, ())
             if not result:
                 return JSONResponse(status_code=404, content={"Error": "Tickets no encontrado"})
@@ -283,57 +283,51 @@ def get_tickets(ticket_type, token_data):
         elif ticket_type == 2:
             if token_data.get("type") < 2:
                 return JSONResponse(status_code=403, content={"Error": "No tienes permisos para ver todos los tickets"})
-            query = "SELECT id, user, subject, status, type FROM tickets WHERE type = 2"
+            query = "SELECT id, user, subject, status, type, provider_email FROM tickets WHERE type = 2"
             result = DB.GETDB(query, ())
             if not result:
                 return JSONResponse(status_code=404, content={"Error": "Tickets no encontrado"})
             return JSONResponse(status_code=200, content=result)
+        else:
+            return JSONResponse(status_code=400, content={"Error": "Tipo de ticket inválido"})
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"Error": str(e)})
 
 def change_status(data, token_data):
     try:
+        ticket_id = data.get("ticket_id")
+        new_status = data.get("status")
+        
         query = "SELECT status, type FROM tickets WHERE id = %s"
-        result = DB.GETDB(query, (data.get("ticket_id"),))
+        result = DB.GETDB(query, (ticket_id,))
         if not result:
             return JSONResponse(status_code=404, content={"Error": "Ticket no encontrado"})
         
         real_ticket_type = result[0].get("type")
         user_type = token_data.get("type")
 
-        if data.get("status") not in ["open", "closed"]:
+        if new_status not in ["open", "closed"]:
             return JSONResponse(status_code=400, content={"Error": "Status inválido"})
         
         if real_ticket_type == 2 and user_type < 2:
-            return JSONResponse(status_code=403, content={"Error": "No tienes permisos para cambiar el status de tickets internos"})
+            return JSONResponse(status_code=403, content={"Error": "No tienes permisos"})
         
         query = "UPDATE tickets SET status = %s WHERE id = %s"
-        DB.PUTDB(query, (data.get("status"), data.get("ticket_id")))
+        DB.PUTDB(query, (new_status, ticket_id))
         
         return JSONResponse(status_code=200, content={"message": "Status cambiado exitosamente"})
     except Exception as e:
         return JSONResponse(status_code=500, content={"Error": str(e)})
-        result = DB.GETDB(query, (data.get("ticket_id"),))
-        if not result:
-            return JSONResponse(status_code=404, content={"Error": "Ticket no encontrado"})
-        
-        real_ticket_type = result[0].get("type")
-        user_type = token_data.get("type")
 
-        # Verificar que el status es válido
-        if data.get("status") not in ["open", "closed"]:
-            return JSONResponse(status_code=400, content={"Error": "Status inválido"})
+def update_provider_email(ticket_id, email, token_data):
+    try:
+        if not token_data or token_data.get("type") < 1:
+            return JSONResponse(status_code=403, content={"Error": "No tienes permisos"})
         
-        # Lógica de permisos:
-        # Si el ticket es tipo 2 (interno), el usuario debe ser tipo >= 2
-        if real_ticket_type == 2 and user_type < 2:
-            return JSONResponse(status_code=403, content={"Error": "No tienes permisos para cambiar el status de tickets internos"})
+        query = "UPDATE tickets SET provider_email = %s WHERE id = %s"
+        DB.PUTDB(query, (email, ticket_id))
         
-        # Si el ticket es tipo 1, o si es tipo 2 y el usuario es agente/admin, permitimos el cambio
-        query = "UPDATE tickets SET status = %s WHERE id = %s"
-        DB.PUTDB(query, (data.get("status"), data.get("ticket_id")))
-        
-        return JSONResponse(status_code=200, content={"message": "Status cambiado exitosamente"})
+        return JSONResponse(status_code=200, content={"message": "Correo del proveedor actualizado"})
     except Exception as e:
         return JSONResponse(status_code=500, content={"Error": str(e)})

@@ -11,6 +11,13 @@ let activeFilter = "open";
 let currentUsername = "";
 let isAgentJoined = false; // Indica si el agente está unido
 let isAutoJoining = false; // Para evitar bucles infinitos
+let isGmailMode = false;
+let providerEmail = "";
+let gmailSubject = "";
+let gmailSSESource = null;
+let gmailActivityTimeout = null;
+let gmailCountdownTimeout = null;
+const gmailInactivityPeriod = 60000; // 1 minuto
 
 // Traduce el estado del inglés al español
 function translateStatus(status) {
@@ -209,6 +216,7 @@ function connectSSE(ticketId) {
     
     // El agente está unido
     isAgentJoined = true;
+    updateChatHeaderButtons();
     
     // Configurar según el estado del ticket
     if (currentTicket?.status === 'closed') {
@@ -356,7 +364,7 @@ function showAgentNotJoinedMessage() {
       <div>
         <p>
           Aún no te has unido a esta conversación.<br>
-          Debes unirte para poder enviar mensajes.
+          Debes unirte para poder gestionar el ticket.
         </p>
         <button class="btn-confirm" onclick="joinTicket(${currentTicket?.id}, this)">
           Unirse al chat
@@ -364,6 +372,34 @@ function showAgentNotJoinedMessage() {
       </div>
     </div>
   `;
+}
+
+function updateChatHeaderButtons() {
+  const area = document.getElementById("chatHeaderButtons");
+  if (!area || !currentTicket) return;
+
+  const isClosed = currentTicket.status === "closed";
+  
+  // Gmail solo si está unido y abierto
+  const gmailBtn = (isAgentJoined && !isClosed) ? `
+    <button class="btn-status-toggle" 
+            style="background: #ea4335; color: #fff; border: none; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(234, 67, 53, 0.2);"
+            onclick="openGmailModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9-2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+      </svg>
+      Gmail Proveedor
+    </button>` : '';
+
+  // Cerrar solo si está unido
+  const statusBtn = (isAgentJoined) ? `
+    <button class="btn-status-toggle ${currentTicket.status === 'closed' ? 'btn-reopen' : 'btn-close'}" 
+            id="statusToggleBtn"
+            onclick="changeTicketStatus(${currentTicket.id}, '${currentTicket.status}')">
+      ${currentTicket.status === 'closed' ? 'Abrir ticket' : 'Cerrar ticket'}
+    </button>` : '';
+
+  area.innerHTML = gmailBtn + statusBtn;
 }
 
 // Función para mostrar el área de input o mensaje de ticket cerrado
@@ -462,11 +498,7 @@ async function openChat(ticket) {
           </div>
         </div>
         <div style="display:flex; align-items:center; gap: 12px;">
-          <button class="btn-status-toggle ${ticket.status === 'closed' ? 'btn-reopen' : 'btn-close'}" 
-                  id="statusToggleBtn"
-                  onclick="changeTicketStatus(${ticket.id}, '${ticket.status}')">
-            ${ticket.status === 'closed' ? 'Abrir ticket' : 'Cerrar ticket'}
-          </button>
+          <div id="chatHeaderButtons" style="display:flex; align-items:center; gap: 12px;"></div>
           <div class="sse-indicator">
             <div class="sse-dot" id="sseDot"></div>
             <span id="sseLabel">Conectando…</span>
@@ -803,8 +835,373 @@ async function changeTicketStatus(ticketId, currentStatus) {
   }
 }
 
+// ── GMAIL CHAT MODAL ──────────────────────────────────────────────────────────
+async function openGmailModal() {
+  if (!currentTicket) return;
+  
+  // Guardar datos del ticket antes de cerrar la conversación interna
+  const ticketData = { ...currentTicket };
+  
+  // Cerrar la conversación actual por completo (limpia UI, cierra SSE y pone currentTicket = null)
+  closeChat();
+  
+  // Restaurar el objeto ticket para que el modal funcione correctamente
+  currentTicket = ticketData;
+
+  // 2. Preparar datos de Gmail
+  providerEmail = currentTicket.provider_email || "";
+  
+  if (!providerEmail) {
+    providerEmail = prompt("Ingresa el correo del proveedor para este ticket:", "");
+    if (!providerEmail) {
+      showToast("Se requiere un correo para contactar al proveedor", "warning");
+      return;
+    }
+    // Guardar el correo en la BD
+    fetch(`/api/updateProviderEmail?ticket_id=${currentTicket.id}&email=${encodeURIComponent(providerEmail)}`, { method: "POST" })
+      .then(r => r.json())
+      .then(data => {
+        if (data.message) {
+          currentTicket.provider_email = providerEmail;
+          const t = allTickets.find(x => x.id === currentTicket.id);
+          if (t) {
+            t.provider_email = providerEmail;
+            renderTickets(); // Actualizar el onclick de los tickets en el sidebar
+          }
+        }
+      });
+  }
+  
+  gmailSubject = currentTicket.subject;
+  
+  // Crear el modal si no existe
+  let modal = document.getElementById("gmailModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "gmailModal";
+    modal.className = "modal-overlay";
+    document.body.appendChild(modal);
+  }
+  
+  modal.innerHTML = `
+    <div class="modal modal-gmail">
+      <div class="modal-gmail-header">
+        <div>
+          <div style="font-weight: 700; display:flex; align-items:center; gap:8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#ea4335">
+              <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+            </svg>
+            Contacto Proveedor (Gmail)
+          </div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top:2px;">
+            ${providerEmail} · Ticket #${currentTicket.id}
+          </div>
+        </div>
+        <button class="btn-close-modal" onclick="closeGmailModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-gmail-content">
+        <div class="modal-gmail-messages" id="gmailMessages">
+          <div style="display:flex; align-items:center; justify-content:center; height:100%;">
+            <div class="spinner"></div>
+          </div>
+        </div>
+        <div class="modal-gmail-footer">
+          <div class="input-files-preview" id="gmailFilesPreview"></div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 0 4px;">
+            <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; width: 34px;">CCO:</div>
+            <input type="text" id="gmailBccInput" placeholder="correos@ejemplo.com, otro@ejemplo.com..." 
+                   style="flex: 1; background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px; padding: 4px 10px; font-size: 12px; color: var(--text); outline: none;">
+          </div>
+          <div class="input-row">
+            <button class="btn-attach" title="Adjuntar archivo" onclick="document.getElementById('gmailFileInput').click()">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M13.5 7.5l-6 6a4 4 0 01-5.657-5.657l6-6a2.5 2.5 0 013.536 3.536l-6 6a1 1 0 01-1.414-1.414l5.5-5.5"
+                      stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <textarea id="gmailMsgInput" placeholder="Escribe un correo al proveedor…" rows="1"
+                      onkeydown="handleGmailKey(event)" oninput="autoResize(this)"></textarea>
+            <button class="btn-send" id="gmailSendBtn" onclick="sendGmailMessage()">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M14 2L7 9M14 2L9 14 7 9 2 7l12-5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <input type="file" id="gmailFileInput" multiple style="display:none" onchange="handleGmailFileSelect(event)">
+        </div>
+      </div>
+    </div>
+  `;
+  
+  modal.classList.add("open");
+  connectGmailSSE(currentTicket.id);
+}
+
+function closeGmailModal() {
+  cancelGmailCountdown();
+  if (gmailActivityTimeout) {
+    clearTimeout(gmailActivityTimeout);
+    gmailActivityTimeout = null;
+  }
+  if (gmailSSESource) {
+    gmailSSESource.close();
+    gmailSSESource = null;
+  }
+  const modal = document.getElementById("gmailModal");
+  if (modal) modal.classList.remove("open");
+  pendingGmailFiles = [];
+}
+
+function resetGmailActivity() {
+  cancelGmailCountdown();
+  if (gmailActivityTimeout) {
+    clearTimeout(gmailActivityTimeout);
+  }
+  if (gmailSSESource && currentTicket) {
+    gmailActivityTimeout = setTimeout(() => {
+      showGmailInactivityCountdown();
+    }, gmailInactivityPeriod);
+  }
+}
+
+function cancelGmailCountdown() {
+  if (gmailCountdownTimeout) {
+    clearInterval(gmailCountdownTimeout);
+    gmailCountdownTimeout = null;
+  }
+  const modal = document.getElementById("gmailInactivityModal");
+  if (modal) modal.remove();
+}
+
+function showGmailInactivityCountdown() {
+  let secondsLeft = 10;
+  const modal = document.createElement("div");
+  modal.id = "gmailInactivityModal";
+  modal.className = "modal-overlay open";
+  modal.style.zIndex = "2000"; // Por encima del modal de gmail
+  modal.innerHTML = `
+    <div class="modal" style="text-align: center;">
+      <div class="modal-title">¿Continuar conversación de Gmail?</div>
+      <p style="color: var(--text-dim); margin-bottom: 20px;">
+        La conexión se cerrará por inactividad en:
+      </p>
+      <div style="font-size: 48px; font-weight: 700; color: var(--danger); margin-bottom: 20px;" id="gmailCountdownNumber">
+        ${secondsLeft}
+      </div>
+      <div class="modal-actions" style="justify-content: center; gap: 10px;">
+        <button class="btn-confirm" onclick="extendGmailSession()">
+          Mantener conectado (${secondsLeft}s)
+        </button>
+        <button class="btn-cancel" onclick="closeGmailModal()">
+          Cerrar ahora
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  
+  const updateBtn = () => {
+    const btn = modal.querySelector('.btn-confirm');
+    if (btn) btn.innerHTML = `Mantener conectado (${secondsLeft}s)`;
+  };
+  
+  gmailCountdownTimeout = setInterval(() => {
+    secondsLeft--;
+    const el = document.getElementById("gmailCountdownNumber");
+    if (el) el.textContent = secondsLeft;
+    updateBtn();
+    
+    if (secondsLeft <= 0) {
+      closeGmailModal();
+      showToast("Conexión de Gmail cerrada por inactividad", "error");
+    }
+  }, 1000);
+}
+
+function extendGmailSession() {
+  cancelGmailCountdown();
+  resetGmailActivity();
+}
+
+function connectGmailSSE(ticketId) {
+  if (gmailSSESource) gmailSSESource.close();
+  
+  const url = `/api/gmailChat?ticket_id=${ticketId}`;
+  gmailSSESource = new EventSource(url);
+
+  gmailSSESource.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      if (data.current_user) {
+        const area = document.getElementById("gmailMessages");
+        if (area && area.querySelector('.spinner')) area.innerHTML = '';
+        resetGmailActivity();
+        return;
+      }
+      appendGmailMessage(data);
+      resetGmailActivity();
+    } catch (error) {
+      console.error('Error parsing Gmail SSE message:', error);
+    }
+  };
+  
+  gmailSSESource.onerror = () => {
+    console.error('Gmail SSE Error');
+    closeGmailModal();
+  };
+  
+  gmailSSESource.addEventListener("close", (e) => {
+    closeGmailModal();
+    showToast("Chat de Gmail cerrado por el servidor", "warning");
+  });
+
+  resetGmailActivity();
+}
+
+let pendingGmailFiles = [];
+let gmailFileIdCounter = 0;
+
+async function loadGmailMessages(ticketId) {
+  // Ya no se usa polling, pero mantenemos la firma por si acaso
+}
+
+function appendGmailMessage(msg) {
+  const area = document.getElementById("gmailMessages");
+  if (!area) return;
+  
+  if (area.querySelector('.spinner')) area.innerHTML = '';
+  
+  if (msg.id) {
+    const existing = area.querySelector(`[data-msg-id="${msg.id}"]`);
+    if (existing) return;
+  }
+  
+  const isMe = msg.is_me;
+  const div = document.createElement("div");
+  div.className = `msg-row ${isMe ? "mine" : "theirs"}`;
+  if (msg.id) div.dataset.msgId = msg.id;
+  
+  let filesHtml = "";
+  if (msg.files) {
+    const files = msg.files.split('|');
+    filesHtml = "<div class='msg-files' style='margin-top: 8px; display: flex; flex-direction: column; gap: 4px;'>" +
+      files.map(f => `
+        <a href="/api/getGmailAttachment?ticket_id=${currentTicket.id}&msg_id=${msg.id}&filename=${encodeURIComponent(f)}" 
+           target="_blank" class="msg-file" 
+           style="background: ${isMe ? 'rgba(255,255,255,0.1)' : 'var(--surface2)'}; border-color: ${isMe ? 'rgba(255,255,255,0.2)' : 'var(--border)'}; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 6px; text-decoration: none; color: ${isMe ? '#fff' : 'var(--accent)'}; font-size: 11px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          ${escHtml(f)}
+        </a>`).join("") + "</div>";
+  }
+
+  div.innerHTML = `
+      <div style="width: 100%">
+        <div class="msg-bubble" style="${isMe ? 'background: #ea4335; border-color: #ea4335;' : ''} max-width: 100%">
+          ${escHtml(msg.message || '')}${filesHtml}
+        </div>
+      </div>`;
+  
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+async function sendGmailMessage() {
+  const btn = document.getElementById("gmailSendBtn");
+  if (!btn || btn.disabled) return;
+
+  const input = document.getElementById("gmailMsgInput");
+  const message = input.value.trim();
+  if (!message && pendingGmailFiles.length === 0) return;
+
+  btn.disabled = true;
+  const savedMessage = message;
+  const savedFiles = [...pendingGmailFiles];
+  input.value = "";
+  input.style.height = "auto";
+
+  try {
+    const formData = new FormData();
+    formData.append("ticket_id", currentTicket.id);
+    formData.append("to_email", providerEmail);
+    formData.append("subject", gmailSubject);
+    formData.append("message", savedMessage);
+    
+    const bcc = document.getElementById("gmailBccInput")?.value || "";
+    formData.append("bcc", bcc);
+    
+    savedFiles.forEach(pf => {
+      formData.append("files", pf.file);
+    });
+
+    const res = await fetch(`/api/sendGmailMessage`, {
+      method: "POST",
+      body: formData,
+    });
+    
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.Error || "Error al enviar correo");
+
+    pendingGmailFiles = [];
+    renderGmailFilesPreview();
+    const bccInput = document.getElementById("gmailBccInput");
+    if (bccInput) bccInput.value = "";
+    
+    resetGmailActivity();
+    showToast("Correo enviado al proveedor", "success");
+  } catch (e) {
+    showToast(e.message, "error");
+    input.value = savedMessage;
+    autoResize(input);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function handleGmailFileSelect(e) {
+  Array.from(e.target.files).forEach((file) => {
+    const pf = { file, id: ++gmailFileIdCounter };
+    pendingGmailFiles.push(pf);
+  });
+  renderGmailFilesPreview();
+  e.target.value = ""; // Limpiar input para permitir re-selección
+}
+
+function removeGmailFile(id) {
+  pendingGmailFiles = pendingGmailFiles.filter(f => f.id !== id);
+  renderGmailFilesPreview();
+}
+
+function renderGmailFilesPreview() {
+  const preview = document.getElementById("gmailFilesPreview");
+  if (!preview) return;
+  preview.innerHTML = pendingGmailFiles.map((pf) => `
+    <div class="file-chip done">
+      ${pf.file.name}
+      <button onclick="removeGmailFile(${pf.id})">×</button>
+    </div>`).join("");
+}
+
 function isUploading() {
   return pendingFiles.some((f) => f.state === "uploading");
+}
+
+function handleGmailKey(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    e.stopPropagation();
+    sendGmailMessage();
+    return false;
+  }
+  return true;
 }
 
 // Manejador de tecla Enter mejorado

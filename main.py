@@ -1,5 +1,5 @@
 # Importamos librerias que vayamos a utilizar 
-from fastapi import FastAPI, Depends, Cookie
+from fastapi import FastAPI, Depends, Cookie, Form, File, UploadFile
 
 from typing import List
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
@@ -676,3 +676,88 @@ def get_tickets(ticket_type: int, token_data: dict = Depends(VerifyTokenControll
 )
 def change_status(data: schemasPayload.TicketChangeStatus, token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
     return TicketsController.change_status(data.dict(), token_data)
+
+# ----------- GMAIL CHAT ----------- #
+@app.get("/api/getGmailAttachment", tags=["Gmail"])
+def get_gmail_attachment(ticket_id: int, msg_id: str, filename: str, token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    # Limpiar el id por si es de enviados
+    clean_id = msg_id.replace("_sent", "")
+    return GmailController.get_gmail_attachment(ticket_id, clean_id, filename)
+
+@app.post(
+    "/api/sendGmailMessage",
+    tags=["Gmail"],
+    summary="Enviar un mensaje de Gmail al proveedor",
+    responses={
+        200: {"model": dict},
+        401: {"model": Schemas.VerifySession401},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+def send_gmail_message(
+    ticket_id: int = Form(...),
+    to_email: str = Form(...),
+    subject: str = Form(...),
+    message: str = Form(...),
+    bcc: str = Form(None),
+    files: List[UploadFile] = File(None),
+    token_data: dict = Depends(VerifyTokenController.check_is_logged_in)
+):
+    # Verificar que el agente esté unido y el ticket abierto
+    from models import db as DB
+    query = "SELECT agents, status FROM tickets WHERE id = %s"
+    result = DB.GETDB(query, (ticket_id,))
+    if not result:
+        return JSONResponse(status_code=404, content={"Error": "Ticket no encontrado"})
+    
+    agents = result[0].get("agents", "") or ""
+    status = result[0].get("status", "")
+    
+    if token_data.get("username") not in agents.split("|"):
+        return JSONResponse(status_code=403, content={"Error": "No estás unido a este ticket"})
+    
+    if status == "closed":
+        return JSONResponse(status_code=400, content={"Error": "El ticket está cerrado"})
+
+    return GmailController.send_gmail_message(
+        ticket_id, 
+        to_email, 
+        subject, 
+        message, 
+        files,
+        bcc
+    )
+
+@app.get("/api/getGmailMessages", tags=["Gmail"])
+def get_gmail_messages(ticket_id: int, token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    return GmailController.get_emails(ticket_id)
+
+@app.get(
+    "/api/gmailChat",
+    tags=["Gmail"],
+    summary="Obtener mensajes de Gmail vía SSE",
+    responses={
+        200: {"model": dict},
+        401: {"model": Schemas.VerifySession401},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+async def gmail_chat_sse(ticket_id: int, token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    from fastapi.responses import StreamingResponse
+    return StreamingResponse(
+        GmailController.gmail_chat_sse(ticket_id), 
+        media_type="text/event-stream"
+    )
+
+@app.post(
+    "/api/updateProviderEmail",
+    tags=["Gmail"],
+    summary="Actualizar el correo del proveedor para un ticket",
+    responses={
+        200: {"model": dict},
+        401: {"model": Schemas.VerifySession401},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+def update_provider_email(ticket_id: int, email: str, token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    return TicketsController.update_provider_email(ticket_id, email, token_data)

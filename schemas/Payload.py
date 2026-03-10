@@ -134,3 +134,10 @@ class TicketChangeStatus(BaseModel):
             }
         }
     }
+
+class SendGmailMessage(BaseModel):
+    ticket_id: int
+    to_email: str
+    subject: str
+    message: str
+    files: Optional[str] = None
