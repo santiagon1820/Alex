@@ -19,17 +19,23 @@ async function checkPermissions() {
                 ".fixed.inset-y-0.left-0 a",
             );
             sidebarLinks.forEach((link) => {
-                const href = link.getAttribute("href");
+                let href = link.getAttribute("href");
 
                 // Si es el logo (MG) lo dejamos como está
                 if (!href) return;
+
+                // Lógica especial para /tickets
+                if (href === "/tickets" && !allowedPages.includes("/tickets/admin")) {
+                    link.setAttribute("href", "/tickets/usuario");
+                    href = "/tickets/usuario";
+                }
 
                 // Si el href está en la lista de permitidos, lo mostramos
                 if (allowedPages.includes(href)) {
                     link.style.display = "flex";
                 }
                 // Mantenemos siempre visibles Dashboard e Inicio
-                else if (href === "/panel" || href === "#") {
+                else if (href === "/panel" || href === "#" || href === "/tickets/usuario") {
                     link.style.display = "flex";
                 }
             });
@@ -124,7 +130,7 @@ async function loadNotifications() {
         if (notificationContainer) {
             notificationContainer.innerHTML = `
                 <div class="p-4 text-center text-xs text-red-500">
-                    No se pudieron cargar las alertas
+                    No se pudieron cargar las notificaciones
                 </div>`;
         }
     }
@@ -151,7 +157,7 @@ function renderNotifications() {
         notificationContainer.innerHTML = `
             <div class="p-8 text-center flex flex-col items-center gap-2">
                 <span class="material-symbols-outlined text-gray-300 text-4xl">notifications_off</span>
-                <p class="text-xs text-gray-500 font-medium">No tienes alertas pendientes</p>
+                <p class="text-xs text-gray-500 font-medium">No tienes notificaciones pendientes</p>
             </div>`;
         return;
     }

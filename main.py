@@ -139,10 +139,13 @@ def read_tickets(is_logged_in: dict = Depends(VerifyTokenController.check_is_log
     if not is_logged_in:
         return RedirectResponse(url="/login", status_code=302)
 
-    # Verificar permisos
-    if not PermissionsController.has_permission(is_logged_in.get("type", 0), "/tickets"):
-        return RedirectResponse(url="/panel", status_code=302)
+    user_type = is_logged_in.get("type", 0)
 
+    # Si no tiene permiso de admin, lo mandamos directo a /tickets/usuario
+    if not PermissionsController.has_permission(user_type, "/tickets/admin"):
+        return RedirectResponse(url="/tickets/usuario", status_code=302)
+
+    # Si llegó aquí es porque sí es admin o tiene permiso
     response = FileResponse("templates/tickets.html")
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"

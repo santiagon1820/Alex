@@ -1,7 +1,8 @@
 import models.db as DB
-from fastapi.responses import JSONResponse, StreamingResponse
 import asyncio
 import json
+from fastapi.responses import JSONResponse, StreamingResponse
+from controllers.NotificationsController import add_notification
 
 def generate_ticket(data, token_data):    
     try:
@@ -16,6 +17,7 @@ def generate_ticket(data, token_data):
                     content={"Error": "Token inválido o expirado"}
                 )
             user_val = token_data.get("username")
+            add_notification(2, f"Nueva ticket abierto: {subject}", "media")
         elif type_ticket == 1:
             user_val = data.get("email")
             if not user_val:
@@ -23,6 +25,9 @@ def generate_ticket(data, token_data):
                     status_code=400,
                     content={"Error": "El correo es obligatorio para tickets externos"}
                 )
+            add_notification(1, f"Nueva garantía: {subject}", "alta")
+            add_notification(2, f"Nueva garantía: {subject}", "alta")
+
         else:
             return JSONResponse(
                 status_code=400,
@@ -306,6 +311,7 @@ def change_status(data, token_data):
         
         real_ticket_type = result[0].get("type")
         user_type = token_data.get("type")
+        username = token_data.get("username")
 
         if new_status not in ["open", "closed"]:
             return JSONResponse(status_code=400, content={"Error": "Status inválido"})
@@ -316,6 +322,19 @@ def change_status(data, token_data):
         query = "UPDATE tickets SET status = %s WHERE id = %s"
         DB.PUTDB(query, (new_status, ticket_id))
         
+        if real_ticket_type == 2:
+            if new_status == "open":
+                add_notification(2, f"{username} ha abierto el ticket: {ticket_id}", "baja")
+            else:
+                add_notification(2, f"{username} ha cerrado el ticket: {ticket_id}", "baja")
+        elif real_ticket_type == 1:
+            if new_status == "open":
+                add_notification(1, f"{username} ha abierto la garantía: {ticket_id}", "baja")
+                add_notification(2, f"{username} ha abierto la garantía: {ticket_id}", "baja")
+            else:
+                add_notification(1, f"{username} ha cerrado la garantía: {ticket_id}", "media")
+                add_notification(2, f"{username} ha cerrado la garantía: {ticket_id}", "media")
+
         return JSONResponse(status_code=200, content={"message": "Status cambiado exitosamente"})
     except Exception as e:
         return JSONResponse(status_code=500, content={"Error": str(e)})
