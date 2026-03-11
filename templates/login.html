@@ -1,85 +1,61 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Iniciar Sesión | MgLab</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/css/login.css" />
-  </head>
-  <body>
-    <div class="container">
-      <main class="card">
-        <header class="logo-container">
-          <h1>MgLab</h1>
-          <p>Bienvenido de nuevo</p>
-        </header>
 
-        <form id="loginForm">
-          <div class="form-group">
-            <label for="username">Usuario</label>
-            <div class="input-wrapper">
-              <input
-                type="text"
-                id="username"
-                placeholder="Tu nombre de usuario"
-                autocomplete="username"
-                autocorrect="off"
-                autocapitalize="none"
-                required
-              />
-            </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iniciar Sesión | MgLab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/login.css" />
+</head>
+
+<body>
+  <div class="container">
+    <main class="card">
+      <header class="logo-container">
+        <h1>MgLab</h1>
+        <p>Bienvenido de nuevo</p>
+      </header>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="username">Usuario</label>
+          <div class="input-wrapper">
+            <input type="text" id="username" placeholder="Tu nombre de usuario" autocomplete="username"
+              autocorrect="off" autocapitalize="none" required />
           </div>
+        </div>
 
-          <div class="form-group">
-            <label for="password">Contraseña</label>
-            <div class="input-wrapper">
-              <input
-                type="password"
-                id="password"
-                placeholder="••••••••"
-                autocomplete="current-password"
-                autocorrect="off"
-                autocapitalize="none"
-                required
-              />
-            </div>
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <div class="input-wrapper">
+            <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"
+              autocorrect="off" autocapitalize="none" required />
           </div>
+        </div>
 
-          <div class="form-group otp-group">
-            <label for="twofaCode">Código 2FA</label>
-            <div class="input-wrapper">
-              <input
-                type="text"
-                id="twofaCode"
-                placeholder="000000"
-                maxlength="6"
-                pattern="\d{6}"
-                inputmode="numeric"
-                autocomplete="one-time-code"
-                required
-              />
-            </div>
+        <div class="form-group otp-group">
+          <label for="twofaCode">Código 2FA</label>
+          <div class="input-wrapper">
+            <input type="text" id="twofaCode" placeholder="000000" maxlength="6" pattern="\d{6}" inputmode="numeric"
+              autocomplete="one-time-code" required />
           </div>
+        </div>
 
-          <button type="submit" id="loginBtn">Entrar</button>
-        </form>
+        <button type="submit" id="loginBtn">Entrar</button>
+      </form>
 
-        <div id="loginMessage" class="message hidden"></div>
-      </main>
+      <div id="loginMessage" class="message hidden"></div>
+    </main>
 
-      <footer>
-        <p>
-          ¿Problemas con tu cuenta? <a href="/tickets">Abre un ticket</a>
-        </p>
-      </footer>
-    </div>
+    <footer>
+      <p>¿Problemas con tu cuenta? <a href="/tickets">Abre un ticket</a></p>
+    </footer>
+  </div>
 
-    <script src="/js/login.js"></script>
-  </body>
+  <script src="/js/login.js"></script>
+</body>
+
 </html>

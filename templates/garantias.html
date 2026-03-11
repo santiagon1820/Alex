@@ -1,105 +1,114 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Portal de Garantías</title>
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="/css/garantias.css">
 </head>
+
 <body>
 
-<!-- LOGIN -->
-<div id="loginScreen">
-  <div class="login-card">
-    <div class="login-logo"><span class="dot"></span></div>
-    <div class="login-title">Portal de Garantías</div>
-    <div class="login-sub">Ingresa tu correo electrónico para acceder a tus solicitudes de garantía.</div>
-    <label class="login-label">Correo electrónico</label>
-    <input class="login-input" type="email" id="loginEmail" placeholder="tu@correo.com"
-           onkeydown="if(event.key==='Enter') doLogin()" autofocus />
-    <button class="login-btn" onclick="doLogin()">
-      <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-        <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      Continuar
-    </button>
-    <span class="login-tag">MGLAB · GARANTÍAS</span>
-  </div>
-</div>
-
-<!-- APP SHELL -->
-<div id="appShell">
-  <header>
-    <div class="header-brand">
-      <span class="dot"></span>
-      Portal de Garantías
-    </div>
-    <div class="header-user">
-      <span class="header-email" id="headerEmail"></span>
-      <button class="btn-logout" onclick="doLogout()">Salir</button>
-    </div>
-  </header>
-
-  <div class="app">
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <span class="sidebar-title">Mis Tickets</span>
-        <button class="btn-new" onclick="openNewModal()">
-          <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-            <path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          Nuevo
-        </button>
-      </div>
-      <div class="filter-bar">
-        <button class="filter-btn" id="filterAll" onclick="setFilter('all')">Todos</button>
-        <button class="filter-btn active" id="filterOpen" onclick="setFilter('open')">Abiertos</button>
-        <button class="filter-btn" id="filterClosed" onclick="setFilter('closed')">Cerrados</button>
-      </div>
-      <div class="tickets-list" id="ticketsList">
-        <div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>
-      </div>
-      <div class="sidebar-footer">
-        <button class="btn-refresh" onclick="loadTickets()">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M10.5 2a5 5 0 11-8.66 2.5M1 2l.5 2.5L4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Actualizar tickets
-        </button>
-      </div>
-    </aside>
-
-    <main class="main" id="mainArea">
-      <div class="no-ticket">
-        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-          <rect x="6" y="10" width="36" height="28" rx="4" stroke="currentColor" stroke-width="2"/>
-          <path d="M14 20h20M14 26h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <!-- LOGIN -->
+  <div id="loginScreen">
+    <div class="login-card">
+      <div class="login-logo"><span class="dot"></span></div>
+      <div class="login-title">Portal de Garantías</div>
+      <div class="login-sub">Ingresa tu correo electrónico para acceder a tus solicitudes de garantía.</div>
+      <label class="login-label">Correo electrónico</label>
+      <input class="login-input" type="email" id="loginEmail" placeholder="tu@correo.com"
+        onkeydown="if(event.key==='Enter') doLogin()" autofocus />
+      <button class="login-btn" onclick="doLogin()">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+            stroke-linejoin="round" />
         </svg>
-        <p>Selecciona un ticket para ver la conversación</p>
+        Continuar
+      </button>
+      <span class="login-tag">MGLAB · GARANTÍAS</span>
+    </div>
+  </div>
+
+  <!-- APP SHELL -->
+  <div id="appShell">
+    <header>
+      <div class="header-brand">
+        <span class="dot"></span>
+        Portal de Garantías
       </div>
-    </main>
-  </div>
-</div>
+      <div class="header-user">
+        <span class="header-email" id="headerEmail"></span>
+        <button class="btn-logout" onclick="doLogout()">Salir</button>
+      </div>
+    </header>
 
-<!-- MODAL -->
-<div class="modal-overlay" id="newModal">
-  <div class="modal">
-    <div class="modal-title">Abrir solicitud de garantía</div>
-    <div class="form-group">
-      <label>Asunto</label>
-      <input type="text" id="modalSubject" placeholder="Describe brevemente tu solicitud" />
+    <div class="app">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-title">Mis Tickets</span>
+          <button class="btn-new" onclick="openNewModal()">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            Nuevo
+          </button>
+        </div>
+        <div class="filter-bar">
+          <button class="filter-btn" id="filterAll" onclick="setFilter('all')">Todos</button>
+          <button class="filter-btn active" id="filterOpen" onclick="setFilter('open')">Abiertos</button>
+          <button class="filter-btn" id="filterClosed" onclick="setFilter('closed')">Cerrados</button>
+        </div>
+        <div class="tickets-list" id="ticketsList">
+          <div class="empty-state">
+            <div class="spinner" style="margin:0 auto"></div>
+          </div>
+        </div>
+        <div class="sidebar-footer">
+          <button class="btn-refresh" onclick="loadTickets()">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M10.5 2a5 5 0 11-8.66 2.5M1 2l.5 2.5L4 4" stroke="currentColor" stroke-width="1.4"
+                stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Actualizar tickets
+          </button>
+        </div>
+      </aside>
+
+      <main class="main" id="mainArea">
+        <div class="no-ticket">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <rect x="6" y="10" width="36" height="28" rx="4" stroke="currentColor" stroke-width="2" />
+            <path d="M14 20h20M14 26h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <p>Selecciona un ticket para ver la conversación</p>
+        </div>
+      </main>
     </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeNewModal()">Cancelar</button>
-      <button class="btn-confirm" onclick="createTicket()">Abrir ticket</button>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="newModal">
+    <div class="modal">
+      <div class="modal-title">Abrir solicitud de garantía</div>
+      <div class="form-group">
+        <label>Asunto</label>
+        <input type="text" id="modalSubject" placeholder="Describe brevemente tu solicitud" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeNewModal()">Cancelar</button>
+        <button class="btn-confirm" onclick="createTicket()">Abrir ticket</button>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="toast" id="toastContainer"></div>
-<input type="file" id="fileInput" multiple onchange="handleFileSelect(event)" />
+  <div class="toast" id="toastContainer"></div>
+  <input type="file" id="fileInput" multiple onchange="handleFileSelect(event)" />
 
-<script src="/js/garantias.js"></script>
+  <script src="/js/garantias.js"></script>
 </body>
+
 </html>

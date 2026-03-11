@@ -1,6 +1,5 @@
 # Importamos librerias que vayamos a utilizar 
 from fastapi import FastAPI, Depends, Cookie, Form, File, UploadFile
-
 from typing import List
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.requests import Request
@@ -20,6 +19,7 @@ import controllers.PermissionsController as PermissionsController
 import controllers.TicketsController as TicketsController
 import controllers.UploadsController as UploadsController
 import controllers.GmailController as GmailController
+import controllers.NotificationsController as NotificationsController
 
 # Importamos schemas
 import schemas.Payload as schemasPayload
@@ -212,6 +212,10 @@ def read_panel_OC(is_logged_in: dict = Depends(VerifyTokenController.check_is_lo
 @app.get("/garantias", include_in_schema=False)
 def read_garantias(correo: str = None):
     return FileResponse("templates/garantias.html")
+
+@app.get("/manuales", include_in_schema=False)
+def read_manuales(correo: str = None):
+    return FileResponse("templates/manuales.html")
 # ----------- BACKEND ----------- #
 # Endpoint Login
 @app.post(
@@ -289,7 +293,7 @@ def verifySession2FA(token_data: dict = Depends(VerifyTokenController.verify_tok
 # Endpoint para obtener permisos del usuario
 @app.get(
     "/api/myPermissions",
-    tags=["Auth"],
+    tags=["User"],
     summary="Obtener permisos del usuario",
     responses={
         200: {"model": dict},
@@ -743,10 +747,6 @@ def send_gmail_message(
         bcc
     )
 
-@app.get("/api/getGmailMessages", tags=["Gmail"])
-def get_gmail_messages(ticket_id: int, token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
-    return GmailController.get_emails(ticket_id)
-
 @app.get(
     "/api/gmailChat",
     tags=["Gmail"],
@@ -776,3 +776,32 @@ async def gmail_chat_sse(ticket_id: int, token_data: dict = Depends(VerifyTokenC
 )
 def update_provider_email(ticket_id: int, email: str, token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
     return TicketsController.update_provider_email(ticket_id, email, token_data)
+
+# ----------- NOTIFICACIONES ----------- #
+@app.get(
+    "/api/notifications",
+    tags=["Notificaciones"],
+    summary="Obtener notificaciones del usuario",
+    responses={
+        200: {"model": List[Schemas.NotificationRecord]},
+        401: {"model": Schemas.VerifySession401},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+def get_notifications(token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    return NotificationsController.get_notifications(token_data)
+
+@app.post(
+    "/api/notifications/read/{notification_id}",
+    tags=["Notificaciones"],
+    summary="Marcar notificación como leída",
+    responses={
+        200: {"model": Schemas.NotificationStatus200},
+        401: {"model": Schemas.VerifySession401},
+        403: {"model": Schemas.InternalServerError},
+        404: {"model": Schemas.InternalServerError},
+        500: {"model": Schemas.InternalServerError}
+    }
+)
+def mark_as_read(notification_id: int, token_data: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    return NotificationsController.mark_as_read(notification_id, token_data)

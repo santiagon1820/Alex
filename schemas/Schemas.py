@@ -433,3 +433,29 @@ class TicketChangeStatus400(BaseModel):
             }
         }
     }
+
+class NotificationRecord(BaseModel):
+    id_notification: int
+    message: str
+    isRead: int
+    priority: str
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "id_notification": 1,
+                "message": "Notificación 1",
+                "isRead": 0,
+                "priority": "alta"
+            }
+        }
+    }
+
+class NotificationStatus200(BaseModel):
+    message: str
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "message": "Operación realizada con éxito"
+            }
+        }
+    }

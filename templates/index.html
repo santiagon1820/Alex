@@ -1,161 +1,110 @@
 <!doctype html>
 <html class="dark" lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>MGLAB Landing Page - Neural Network Edition</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link
-      href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/css/chat.css" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/css/index.css" />
-    <script id="tailwind-config">
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              primary: "#197fe6",
-              "accent-green": "#2ecc71",
-              "accent-red": "#e74c3c",
-              "bg-dark": "#0a0f16",
-            },
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>MGLAB Landing Page - Neural Network Edition</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/chat.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="/css/index.css" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#197fe6",
+            "accent-green": "#2ecc71",
+            "accent-red": "#e74c3c",
+            "bg-dark": "#0a0f16",
           },
         },
-      };
-    </script>
-  </head>
-  <body class="text-white min-h-screen relative">
-    <div class="neural-container">
-      <canvas id="neural-canvas"></canvas>
-      <div
-        class="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.02),rgba(0,255,0,0.01),rgba(0,0,255,0.02))] z-0 pointer-events-none bg-[length:100%_2px,3px_100%]"
-      ></div>
+      },
+    };
+  </script>
+</head>
+
+<body class="text-white min-h-screen relative">
+  <div class="neural-container">
+    <canvas id="neural-canvas"></canvas>
+    <div
+      class="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.02),rgba(0,255,0,0.01),rgba(0,0,255,0.02))] z-0 pointer-events-none bg-[length:100%_2px,3px_100%]">
     </div>
-    <div class="relative z-10 flex flex-col min-h-screen">
-      <main
-        class="flex-grow flex flex-col items-center justify-center px-6 py-12"
-      >
-        <div class="text-center mb-16 max-w-3xl">
-          <h1
-            class="text-7xl md:text-9xl font-black tracking-tighter glow-text mb-4 text-white uppercase italic"
-          >
-            MGLAB
-          </h1>
+  </div>
+  <div class="relative z-10 flex flex-col min-h-screen">
+    <main class="flex-grow flex flex-col items-center justify-center px-6 py-12">
+      <div class="text-center mb-16 max-w-3xl">
+        <h1 class="text-7xl md:text-9xl font-black tracking-tighter glow-text mb-4 text-white uppercase italic">MGLAB
+        </h1>
+        <div class="h-1 w-24 bg-primary mx-auto mb-6 shadow-[0_0_15px_var(--primary-blue)]"></div>
+        <p
+          class="text-sm md:text-base text-white/70 font-medium tracking-widest uppercase leading-relaxed max-w-xl mx-auto">
+          Advanced Neural Processing Interface <br />
+          <span class="text-primary/80">Secured Research Environment // 2024</span>
+        </p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+        <a href="/login"
+          class="glass-card group relative flex flex-col items-center justify-center gap-4 p-10 rounded-lg transition-all hover:scale-[1.02] hover:border-accent-green/60 accent-glow-green overflow-hidden">
           <div
-            class="h-1 w-24 bg-primary mx-auto mb-6 shadow-[0_0_15px_var(--primary-blue)]"
-          ></div>
-          <p
-            class="text-sm md:text-base text-white/70 font-medium tracking-widest uppercase leading-relaxed max-w-xl mx-auto"
-          >
-            Advanced Neural Processing Interface <br />
-            <span class="text-primary/80"
-              >Secured Research Environment // 2024</span
-            >
+            class="absolute inset-0 bg-gradient-to-br from-accent-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+          </div>
+          <span
+            class="material-symbols-outlined text-5xl text-accent-green drop-shadow-[0_0_8px_rgba(46,204,113,0.5)]">fingerprint</span>
+          <span class="text-lg font-black tracking-[0.2em] uppercase">Iniciar Sesión</span>
+          <div class="w-16 h-0.5 bg-accent-green/50 group-hover:w-full transition-all duration-500"></div>
+        </a>
+        <a href="/2FA"
+          class="glass-card group relative flex flex-col items-center justify-center gap-4 p-10 rounded-lg transition-all hover:scale-[1.02] hover:border-accent-green/60 accent-glow-green overflow-hidden">
+          <div
+            class="absolute inset-0 bg-gradient-to-br from-accent-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+          </div>
+          <span
+            class="material-symbols-outlined text-5xl text-accent-green drop-shadow-[0_0_8px_rgba(46,204,113,0.5)]">verified_user</span>
+          <span class="text-lg font-black tracking-[0.2em] uppercase">2FA</span>
+          <div class="w-16 h-0.5 bg-accent-green/50 group-hover:w-full transition-all duration-500"></div>
+        </a>
+        <a href="/tickets"
+          class="glass-card group relative flex flex-col items-center justify-center gap-4 p-10 rounded-lg transition-all hover:scale-[1.02] hover:border-accent-red/60 accent-glow-red overflow-hidden">
+          <div
+            class="absolute inset-0 bg-gradient-to-br from-accent-red/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+          </div>
+          <span
+            class="material-symbols-outlined text-5xl text-accent-red drop-shadow-[0_0_8px_rgba(231,76,60,0.5)]">confirmation_number</span>
+          <span class="text-lg font-black tracking-[0.2em] uppercase">Tickets</span>
+          <div class="w-16 h-0.5 bg-accent-red/50 group-hover:w-full transition-all duration-500"></div>
+        </a>
+        <a href="/manuales"
+          class="glass-card group relative flex flex-col items-center justify-center gap-4 p-10 rounded-lg transition-all hover:scale-[1.02] hover:border-accent-red/60 accent-glow-red overflow-hidden">
+          <div
+            class="absolute inset-0 bg-gradient-to-br from-accent-red/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+          </div>
+          <span
+            class="material-symbols-outlined text-5xl text-accent-red drop-shadow-[0_0_8px_rgba(231,76,60,0.5)]">menu_book</span>
+          <span class="text-lg font-black tracking-[0.2em] uppercase">Manuales</span>
+          <div class="w-16 h-0.5 bg-accent-red/50 group-hover:w-full transition-all duration-500"></div>
+        </a>
+      </div>
+    </main>
+    <footer class="w-full py-6 px-10 border-t border-primary/10 bg-bg-dark/80 backdrop-blur-md">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="flex items-center gap-8">
+          <p class="text-[10px] text-white/40 font-bold uppercase tracking-widest">
+            ©MGLAB
           </p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
-          <a
-            href="/login"
-            class="glass-card group relative flex flex-col items-center justify-center gap-4 p-10 rounded-lg transition-all hover:scale-[1.02] hover:border-accent-green/60 accent-glow-green overflow-hidden"
-          >
-            <div
-              class="absolute inset-0 bg-gradient-to-br from-accent-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
-            ></div>
-            <span
-              class="material-symbols-outlined text-5xl text-accent-green drop-shadow-[0_0_8px_rgba(46,204,113,0.5)]"
-              >fingerprint</span
-            >
-            <span class="text-lg font-black tracking-[0.2em] uppercase"
-              >Iniciar Sesión</span
-            >
-            <div
-              class="w-16 h-0.5 bg-accent-green/50 group-hover:w-full transition-all duration-500"
-            ></div>
-          </a>
-          <a
-            href="/2FA"
-            class="glass-card group relative flex flex-col items-center justify-center gap-4 p-10 rounded-lg transition-all hover:scale-[1.02] hover:border-accent-green/60 accent-glow-green overflow-hidden"
-          >
-            <div
-              class="absolute inset-0 bg-gradient-to-br from-accent-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
-            ></div>
-            <span
-              class="material-symbols-outlined text-5xl text-accent-green drop-shadow-[0_0_8px_rgba(46,204,113,0.5)]"
-              >verified_user</span
-            >
-            <span class="text-lg font-black tracking-[0.2em] uppercase"
-              >2FA</span
-            >
-            <div
-              class="w-16 h-0.5 bg-accent-green/50 group-hover:w-full transition-all duration-500"
-            ></div>
-          </a>
-          <a
-            href="/tickets"
-            class="glass-card group relative flex flex-col items-center justify-center gap-4 p-10 rounded-lg transition-all hover:scale-[1.02] hover:border-accent-red/60 accent-glow-red overflow-hidden"
-          >
-            <div
-              class="absolute inset-0 bg-gradient-to-br from-accent-red/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
-            ></div>
-            <span
-              class="material-symbols-outlined text-5xl text-accent-red drop-shadow-[0_0_8px_rgba(231,76,60,0.5)]"
-              >confirmation_number</span
-            >
-            <span class="text-lg font-black tracking-[0.2em] uppercase"
-              >Tickets</span
-            >
-            <div
-              class="w-16 h-0.5 bg-accent-red/50 group-hover:w-full transition-all duration-500"
-            ></div>
-          </a>
-          <a
-            href="#"
-            class="glass-card group relative flex flex-col items-center justify-center gap-4 p-10 rounded-lg transition-all hover:scale-[1.02] hover:border-accent-red/60 accent-glow-red overflow-hidden"
-          >
-            <div
-              class="absolute inset-0 bg-gradient-to-br from-accent-red/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
-            ></div>
-            <span
-              class="material-symbols-outlined text-5xl text-accent-red drop-shadow-[0_0_8px_rgba(231,76,60,0.5)]"
-              >menu_book</span
-            >
-            <span class="text-lg font-black tracking-[0.2em] uppercase"
-              >Manuales</span
-            >
-            <div
-              class="w-16 h-0.5 bg-accent-red/50 group-hover:w-full transition-all duration-500"
-            ></div>
-          </a>
-        </div>
-      </main>
-      <footer
-        class="w-full py-6 px-10 border-t border-primary/10 bg-bg-dark/80 backdrop-blur-md"
-      >
-        <div
-          class="flex flex-col md:flex-row justify-between items-center gap-6"
-        >
-          <div class="flex items-center gap-8">
-            <p
-              class="text-[10px] text-white/40 font-bold uppercase tracking-widest"
-            >
-              ©MGLAB
-            </p>
-          </div>
-        </div>
-      </footer>
-    </div>
-    <script src="/js/index.js" defer></script>
-    <script type="module" src="/js/chat.js"></script>
-  </body>
+      </div>
+    </footer>
+  </div>
+  <script src="/js/index.js" defer></script>
+  <script type="module" src="/js/chat.js"></script>
+</body>
+
 </html>
