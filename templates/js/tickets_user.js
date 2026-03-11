@@ -252,7 +252,7 @@ function openChat(ticket) {
   
   // Cerrar SSE anterior
   closeSSE();
-  currentTicket = null;
+  currentTicket = ticket;
   main.innerHTML = `
       <div class="chat-wrap">
         <div class="chat-header">
@@ -312,6 +312,14 @@ function appendMessage(msg) {
   const area = document.getElementById("messagesArea");
   if (!area) return;
   
+  // Si el área tiene el spinner o está vacía con mensajes de error, limpiarla
+  if (area.children.length <= 1) {
+    const firstChild = area.children[0];
+    if (firstChild && (firstChild.querySelector('.spinner') || firstChild.innerHTML.includes('No hay tickets') || firstChild.innerHTML.includes('Selecciona'))) {
+      area.innerHTML = '';
+    }
+  }
+  
   // Evitar duplicados por ID
   if (msg.id) {
     const existing = area.querySelector(`[data-msg-id="${msg.id}"]`);
@@ -343,6 +351,8 @@ function appendMessage(msg) {
       "</div>";
   }
 
+  const time = msg.created_at ? formatDateOnly(msg.created_at) : new Date().toLocaleDateString();
+
   const div = document.createElement("div");
   div.className = `msg-row ${isMe ? "mine" : "theirs"}`;
   if (msg.id) div.dataset.msgId = msg.id;
@@ -355,7 +365,7 @@ function appendMessage(msg) {
       </div>
       <div>
         <div class="msg-bubble">${escHtml(msg.message)}${filesHtml}</div>
-        <div class="msg-meta">${msg.user} · ${formatDateOnly(msg.created_at)}</div>
+        <div class="msg-meta">${msg.user} · ${time}</div>
       </div>`;
   area.appendChild(div);
   area.scrollTop = area.scrollHeight;
@@ -372,7 +382,6 @@ async function sendMessage() {
   if (!currentTicket) return;
   if (isUploading()) return;
 
-  reconnectSSE();
   btn.disabled = true;
 
   // Limpiar input de inmediato (optimista)
@@ -421,6 +430,9 @@ async function sendMessage() {
     pendingFiles = [];
     const preview = document.getElementById("filesPreview");
     if (preview) preview.innerHTML = "";
+    
+    // Resetear actividad después de enviar
+    resetSSEActivity();
   } catch (e) {
     showToast(e.message, "error");
     input.value = savedMessage;
@@ -538,11 +550,23 @@ function isUploading() {
   return pendingFiles.some((f) => f.state === "uploading");
 }
 
+// Manejador de tecla Enter mejorado
 function handleKey(e) {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
-    if (!isUploading()) sendMessage();
+    e.stopPropagation();
+    
+    const input = document.getElementById("msgInput");
+    
+    // Verificar si hay mensaje o archivos
+    if ((input && input.value.trim()) || pendingFiles.length > 0) {
+      if (!isUploading()) {
+        sendMessage();
+      }
+    }
+    return false;
   }
+  return true;
 }
 function autoResize(el) {
   el.style.height = "auto";

@@ -194,6 +194,21 @@ def read_panel_garantias(is_logged_in: dict = Depends(VerifyTokenController.chec
     response.headers["Expires"] = "0"
     return response
 
+@app.get("/panel/OC", include_in_schema=False)
+def read_panel_OC(is_logged_in: dict = Depends(VerifyTokenController.check_is_logged_in)):
+    if not is_logged_in:
+        return RedirectResponse(url="/login", status_code=302)
+
+    # Verificar permisos
+    if not PermissionsController.has_permission(is_logged_in.get("type", 0), "/panel/OC"):
+        return RedirectResponse(url="/panel", status_code=302)
+
+    response = FileResponse("templates/orden_compra.html")
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
 @app.get("/garantias", include_in_schema=False)
 def read_garantias(correo: str = None):
     return FileResponse("templates/garantias.html")

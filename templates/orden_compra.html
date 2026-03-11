@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="es" class="">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>MG MICROS - Sistema de Órdenes</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    
+    <!-- React Dependencies -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/history@5/umd/history.development.js"></script>
+    <script src="https://unpkg.com/react-router@6.3.0/umd/react-router.development.js"></script>
+    <script src="https://unpkg.com/react-router-dom@6.3.0/umd/react-router-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#1d3a6d", // Deep Blue
+                        secondary: "#c9242b", // Red
+                        "background-light": "#f3f4f6",
+                        "background-dark": "#111827",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1f2937",
+                        "border-light": "#e5e7eb",
+                        "border-dark": "#374151",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.375rem",
+                    },
+                },
+            },
+        };
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200 font-display min-h-screen flex flex-col transition-colors duration-200">
+    <div id="root" class="flex flex-col min-h-screen"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+        const { MemoryRouter, Routes, Route, Link, useNavigate } = ReactRouterDOM;
+
+        // --- Shared Components ---
+
+        const Navbar = ({ toggleTheme, isDarkMode }) => {
+            const navigate = useNavigate();
+            
+            return (
+                <nav className="bg-primary text-white shadow-lg z-50 sticky top-0">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex items-center justify-between h-16">
+                            <div className="flex items-center">
+                                <Link to="/" className="flex-shrink-0 font-bold text-xl tracking-wider flex items-center gap-2 text-white hover:text-blue-100 transition-colors">
+                                    <span className="material-symbols-outlined">inventory_2</span>
+                                    MG MICROS
+                                </Link>
+                                <div className="hidden md:block">
+                                    <div className="ml-10 flex items-baseline space-x-4">
+                                        <Link to="/new-order" className="hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium transition-colors">Nueva Orden</Link>
+                                        <Link to="/" className="hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium transition-colors">Historial</Link>
+                                        <Link to="#" className="hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium transition-colors">Proveedores</Link>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-blue-800 transition-colors" id="theme-toggle">
+                                    <span className="material-symbols-outlined">{isDarkMode ? 'light_mode' : 'dark_mode'}</span>
+                                </button>
+                                <div className="flex items-center gap-2">
+                                    <div className="h-8 w-8 rounded-full bg-blue-300 flex items-center justify-center text-primary font-bold">JD</div>
+                                    <span className="text-sm font-medium hidden sm:block">Juan Doe</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+            );
+        };
+
+        const ModalEmail = ({ isOpen, onClose }) => {
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 z-[60] overflow-y-auto">
+                    <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                        <div className="fixed inset-0 transition-opacity" onClick={onClose}>
+                            <div className="absolute inset-0 bg-gray-900 opacity-75"></div>
+                        </div>
+                        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">​</span>
+                        <div className="inline-block align-bottom bg-white dark:bg-surface-dark rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-200 dark:border-gray-700">
+                            <div className="bg-primary px-4 py-3 sm:px-6 flex justify-between items-center">
+                                <h3 className="text-lg leading-6 font-medium text-white flex items-center gap-2">
+                                    <span className="material-symbols-outlined">send</span> Enviar Orden por Correo
+                                </h3>
+                                <button onClick={onClose} className="text-blue-200 hover:text-white focus:outline-none">
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+                            <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Destinatarios</label>
+                                        <div className="relative rounded-md shadow-sm">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span className="material-symbols-outlined text-gray-400 text-sm">alternate_email</span>
+                                            </div>
+                                            <input type="text" className="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 py-2" placeholder="ejemplo@proveedor.com, compras@mgmicros.com"/>
+                                        </div>
+                                        <p className="mt-1 text-xs text-gray-500">Separe múltiples correos con comas.</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Asunto</label>
+                                        <input type="text" className="focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 py-2 px-3" defaultValue="Orden de Compra MGJD20240524001 - MG MICROS"/>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mensaje (Opcional)</label>
+                                        <textarea className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 py-2 px-3" rows="3" defaultValue="Adjunto orden de compra correspondiente. Favor de confirmar recepción y tiempo de entrega."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-800 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200 dark:border-gray-700">
+                                <button type="button" className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm" onClick={() => { alert('¡Correo enviado!'); onClose(); }}>
+                                    Enviar Ahora
+                                </button>
+                                <button type="button" className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" onClick={onClose}>
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Screen 1: New Order (Purchase Order) ---
+        
+        const NewOrderPage = () => {
+            const [dateStr, setDateStr] = useState('');
+            const [orderId, setOrderId] = useState('');
+
+            useEffect(() => {
+                const today = new Date();
+                const dd = String(today.getDate()).padStart(2, '0');
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const yyyy = today.getFullYear();
+                setDateStr(`${dd}/${mm}/${yyyy}`);
+                
+                // Mock Order ID Logic
+                const initials = "JD";
+                const fullDate = yyyy + mm + dd;
+                const sequence = "001";
+                setOrderId(`MG${initials}${fullDate}${sequence}`);
+            }, []);
+
+            return (
+                <main className="flex-grow py-8 px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-5xl mx-auto bg-surface-light dark:bg-surface-dark shadow-xl rounded-lg overflow-hidden border border-border-light dark:border-border-dark">
+                        <div className="p-8 border-b border-border-light dark:border-border-dark">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                <div>
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="relative w-12 h-12">
+                                            <div className="absolute inset-0 rounded-full border-4 border-primary"></div>
+                                            <div className="absolute inset-2 rounded-full border-4 border-secondary opacity-80"></div>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-2xl font-bold text-primary italic leading-none">MG MICROS</span>
+                                            <span className="text-[0.65rem] tracking-widest text-gray-500 dark:text-gray-400 uppercase">Innovación con valor</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                                        <p className="font-bold text-gray-800 dark:text-gray-200">M.G. MICROS DE OCCIDENTE S.A DE C.V</p>
+                                        <p>Av. Tepeyac No. 1483 Col. Chapalita</p>
+                                        <p>Zapopan Jalisco C.P. 45000</p>
+                                        <p>RFC. MGM-950427-MK0</p>
+                                    </div>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-border-light dark:border-border-dark w-full md:w-auto min-w-[320px]">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="font-bold text-primary dark:text-blue-400">Nº ORDEN:</span>
+                                        <span className="font-mono text-gray-900 dark:text-gray-100 font-semibold">{orderId}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="font-bold text-primary dark:text-blue-400">FECHA:</span>
+                                        <span className="font-mono text-gray-900 dark:text-gray-100">{dateStr}</span>
+                                    </div>
+                                    <div className="mt-2 h-1 bg-gradient-to-r from-emerald-400 to-primary rounded-full"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-primary px-8 py-3">
+                            <h2 className="text-white font-semibold text-lg flex items-center gap-2">
+                                <span className="material-symbols-outlined text-sm">info</span> Detalles de la Orden
+                            </h2>
+                        </div>
+
+                        <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-3 items-center">
+                                    <label className="col-span-1 font-bold text-primary dark:text-blue-400 uppercase text-sm">Cliente:</label>
+                                    <input className="col-span-2 bg-gray-50 dark:bg-gray-800 border-border-light dark:border-border-dark rounded-md text-sm py-1 px-2 focus:ring-primary focus:border-primary w-full" type="text" defaultValue="INTERLAB"/>
+                                </div>
+                                <div className="grid grid-cols-3 items-center">
+                                    <label className="col-span-1 font-bold text-primary dark:text-blue-400 uppercase text-sm">Vendedor:</label>
+                                    <input className="col-span-2 bg-gray-50 dark:bg-gray-800 border-border-light dark:border-border-dark rounded-md text-sm py-1 px-2 focus:ring-primary focus:border-primary" type="text" defaultValue="PROYECTOS"/>
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-3 items-center">
+                                    <label className="col-span-1 font-bold text-primary dark:text-blue-400 uppercase text-sm">Proveedor:</label>
+                                    <select className="col-span-2 bg-white dark:bg-gray-800 border-border-light dark:border-border-dark rounded-md text-sm py-1 px-2 focus:ring-primary focus:border-primary shadow-sm" defaultValue="CT INT">
+                                        <option>Seleccionar...</option>
+                                        <option value="CT INT">CT INT</option>
+                                        <option>INGRAM MICRO</option>
+                                        <option>CVA</option>
+                                        <option>EXEL</option>
+                                    </select>
+                                </div>
+                                <div className="grid grid-cols-3 items-center">
+                                    <label className="col-span-1 font-bold text-primary dark:text-blue-400 uppercase text-sm">F. Entrega:</label>
+                                    <select className="col-span-2 bg-white dark:bg-gray-800 border-border-light dark:border-border-dark rounded-md text-sm py-1 px-2 focus:ring-primary focus:border-primary shadow-sm" defaultValue="1 DIA">
+                                        <option value="1 DIA">1 DIA</option>
+                                        <option>3-5 DIAS HABILES</option>
+                                        <option>INMEDIATA</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="px-8 pb-4">
+                            <div className="overflow-x-auto rounded-t-lg border border-primary dark:border-blue-900">
+                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                    <thead className="bg-primary text-white">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider w-16" scope="col">Partida</th>
+                                            <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider w-24" scope="col">Cantidad</th>
+                                            <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider w-32" scope="col">PN</th>
+                                            <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider" scope="col">Descripción</th>
+                                            <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider w-32" scope="col">Precio Unitario</th>
+                                            <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider w-32" scope="col">Importe</th>
+                                            <th className="px-2 py-3 w-10" scope="col"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                                        <tr className="hover:bg-gray-50 dark:hover:bg-gray-750">
+                                            <td className="px-4 py-3 whitespace-nowrap text-center text-gray-500 dark:text-gray-400">1</td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <input className="w-full text-center border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm bg-transparent" min="1" type="number" defaultValue="1"/>
+                                            </td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <input className="w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm uppercase font-mono bg-transparent" type="text" defaultValue="TL-SG108"/>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="text-gray-900 dark:text-gray-100">Switch TP-LINK TL-SG108, Negro, 8, 10/100/1000 Base-T(X)</div>
+                                            </td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-right font-mono">$327.74</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-right font-bold text-primary dark:text-blue-400 font-mono">$327.74</td>
+                                            <td className="px-2 py-3 text-center">
+                                                <button className="text-red-500 hover:text-red-700 dark:hover:text-red-400">
+                                                    <span className="material-symbols-outlined text-lg">delete</span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr className="bg-gray-50 dark:bg-gray-900/50">
+                                            <td className="px-4 py-3 whitespace-nowrap text-center text-gray-400">2</td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <input className="w-full text-center border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm bg-white dark:bg-gray-800" placeholder="1" type="number"/>
+                                            </td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <input className="w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm uppercase font-mono bg-white dark:bg-gray-800" placeholder="Ingresar PN..." type="text"/>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <span className="text-gray-400 italic text-xs">La descripción se cargará automáticamente...</span>
+                                            </td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-right font-mono text-gray-400">$0.00</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-right font-bold text-gray-400 font-mono">$0.00</td>
+                                            <td className="px-2 py-3 text-center"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="mt-4 flex justify-start">
+                                <button className="flex items-center gap-2 text-primary dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors">
+                                    <span className="material-symbols-outlined">add_circle</span> Añadir Partida
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="bg-primary text-white p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs uppercase font-bold text-blue-200 mb-1">Envio a:</label>
+                                        <input className="w-full bg-blue-900/50 border border-blue-700 rounded text-white placeholder-blue-300 focus:ring-white focus:border-white text-sm" type="text" defaultValue="Tulipan"/>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs uppercase font-bold text-blue-200 mb-1">Notas:</label>
+                                        <div className="text-sm font-semibold tracking-wide bg-blue-900/30 p-2 rounded border border-blue-800/50">NO CANCELACIÓN, NO DEVOLUCIÓN</div>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col justify-center space-y-2 bg-blue-800/50 p-4 rounded-lg border border-blue-700">
+                                    <div className="flex justify-between items-center text-lg">
+                                        <span className="font-bold uppercase text-blue-100 text-sm">Sub-Total</span>
+                                        <span className="font-mono font-bold">$ 327.74</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-lg">
+                                        <span className="font-bold uppercase text-blue-100 text-sm">IVA (16%)</span>
+                                        <div className="flex gap-8">
+                                            <span className="text-blue-300">$</span>
+                                            <span className="font-mono font-bold">52.44</span>
+                                        </div>
+                                    </div>
+                                    <div className="border-t border-blue-400 my-2 opacity-50"></div>
+                                    <div className="flex justify-between items-center text-2xl">
+                                        <span className="font-bold uppercase tracking-wider">Total</span>
+                                        <div className="flex gap-8">
+                                            <span className="text-blue-300">$</span>
+                                            <span className="font-mono font-bold text-white">380.18</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end mt-2">
+                                        <span className="text-xs font-bold text-blue-200 bg-blue-900 px-2 py-0.5 rounded">MONEDA: MN</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-8 bg-gray-50 dark:bg-gray-900 border-t border-border-light dark:border-border-dark">
+                            <div className="flex flex-col md:flex-row gap-8 items-start">
+                                <div className="flex-1 text-[10px] leading-relaxed text-gray-600 dark:text-gray-400">
+                                    <h4 className="text-secondary font-bold text-sm mb-2 uppercase border-b border-gray-200 pb-1">Recepción de Mercancia</h4>
+                                    <p className="mb-1 text-secondary text-xs font-bold bg-red-50 inline-block px-1 rounded">ARRIBA DE 5 PZAS.</p>
+                                    <ol className="list-decimal list-inside space-y-1 mt-2">
+                                        <li><strong className="text-gray-800 dark:text-gray-300">ENVIARSE SERIES EN EXCEL POR CORREO AL MENOS 1 HORA ANTES DE LA ENTREGA:</strong> <a className="text-primary dark:text-blue-400 hover:underline" href="#">adminproyectos@mgmicros.com.mx</a> con copia a <a className="text-primary dark:text-blue-400 hover:underline" href="#">facturacion@mgmicros.com.mx</a></li>
+                                        <li><strong className="text-gray-800 dark:text-gray-300">PRESENTAR LA FACTURA</strong></li>
+                                        <li><strong className="text-gray-800 dark:text-gray-300">EN LA FACTURA EN OBSERVACIONES DEBERA VENIR EL NUMERO DE ORDEN COMPRA EMITIDA POR MG</strong></li>
+                                        <li><strong className="text-gray-800 dark:text-gray-300">LOS PRODUCTOS DEBEN VENIR EN BUEN ESTADO Y DEBIDAMENTE CERRADOS</strong></li>
+                                    </ol>
+                                    <div className="mt-4 p-2 bg-yellow-50 dark:bg-yellow-900/10 border-l-4 border-yellow-400 text-gray-700 dark:text-gray-300">
+                                        <p className="font-bold text-[9px] uppercase">
+                                            Nota: En caso de faltar algun requisito, su factura no sera procesada para pago (solo sera recibida la mercancia). Para procesar el pago de acuerdo a los dias de credito, se requiere el expediente completo (series, factura con observaciones). Los dias de credito iniciaran hasta que se entregue debidamente con expediente completo.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex-shrink-0 flex flex-col items-center gap-2 border-l pl-8 border-gray-200 dark:border-gray-700">
+                                    <div className="w-32 h-32 bg-white p-2 rounded shadow-sm border border-gray-300 dark:border-gray-600">
+                                        <img alt="QR Code for Order Tracking" className="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC__q-E1jOScW2Yfrrmi7arju7R6BQUrw51TeqeHgGGl1rMIE8XaHXzUBMSo4uflRjv-GwAWzOkK6oTcWWeVGDpSbLvS-vg-QmSQVewmv7h4FrlF32Y-JK6A6Rjk8EkniCVVtqgqzjWIyZ-GdTnGGFNDthBh55GewYT6UAw0Zhr43oUO0UoaizUysHqYuFpkVS4zYj_OtGHgT1_wzZ5LNTtiszG0xDzpJsA-Apm_fHjycErQUsOLpoGCNzE0hT4pAVrSj1z0XYkuNHs"/>
+                                    </div>
+                                    <span className="text-xs font-mono text-gray-500 dark:text-gray-500">Scan for status</span>
+                                </div>
+                            </div>
+                            <div className="mt-8 flex justify-end gap-4 border-t border-gray-200 dark:border-gray-700 pt-6">
+                                <Link to="/" className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-center">
+                                    Cancelar
+                                </Link>
+                                <button className="px-6 py-2 bg-primary text-white rounded-md font-medium hover:bg-blue-900 shadow-md transition-colors flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-sm">save</span> Guardar Orden
+                                </button>
+                                <button className="px-6 py-2 bg-secondary text-white rounded-md font-medium hover:bg-red-700 shadow-md transition-colors flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-sm">print</span> Imprimir PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            );
+        };
+
+        // --- Screen 2: History (Home Page) ---
+
+        const HistoryPage = () => {
+            const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+            const navigate = useNavigate();
+
+            return (
+                <main className="flex-grow py-8 px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div>
+                                <h1 className="text-2xl font-bold text-primary dark:text-white">Historial de Órdenes de Compra</h1>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Gestione y revise el estado de todas las órdenes emitidas.</p>
+                            </div>
+                            <div className="flex gap-3">
+                                <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
+                                    <span className="material-symbols-outlined text-base">download</span> Exportar
+                                </button>
+                                <Link to="/new-order" className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-blue-900 transition-colors shadow-md">
+                                    <span className="material-symbols-outlined text-base">add</span> Nueva Orden
+                                </Link>
+                            </div>
+                        </div>
+
+                        <div className="bg-surface-light dark:bg-surface-dark p-4 rounded-lg shadow-sm border border-border-light dark:border-border-dark mb-6">
+                            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-4 items-end">
+                                <div className="lg:col-span-3">
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Buscar Orden</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span className="material-symbols-outlined text-gray-400 text-sm">search</span>
+                                        </div>
+                                        <input className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-800 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm" placeholder="Ej: MGJD202405001" type="text"/>
+                                    </div>
+                                </div>
+                                <div className="lg:col-span-2">
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Mes</label>
+                                    <select className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md bg-white dark:bg-gray-800" defaultValue="Mayo 2024">
+                                        <option>Todos</option>
+                                        <option value="Mayo 2024">Mayo 2024</option>
+                                        <option>Abril 2024</option>
+                                        <option>Marzo 2024</option>
+                                    </select>
+                                </div>
+                                <div className="lg:col-span-2">
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Proveedor</label>
+                                    <select className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md bg-white dark:bg-gray-800" defaultValue="Todos">
+                                        <option value="Todos">Todos</option>
+                                        <option>CT INT</option>
+                                        <option>INGRAM MICRO</option>
+                                        <option>CVA</option>
+                                    </select>
+                                </div>
+                                <div className="lg:col-span-3">
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Cliente</label>
+                                    <select className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md bg-white dark:bg-gray-800" defaultValue="Todos">
+                                        <option value="Todos">Todos</option>
+                                        <option>INTERLAB</option>
+                                        <option>TECNOLOGIAS SA</option>
+                                        <option>GOBIERNO</option>
+                                    </select>
+                                </div>
+                                <div className="lg:col-span-2 flex justify-end">
+                                    <button className="w-full md:w-auto px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-md text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                                        Limpiar Filtros
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="bg-surface-light dark:bg-surface-dark shadow-md rounded-lg overflow-hidden border border-border-light dark:border-border-dark">
+                                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-between items-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors">
+                                    <h3 className="text-lg font-semibold text-primary dark:text-white flex items-center gap-2">
+                                        <span className="material-symbols-outlined">calendar_month</span> Mayo 2024
+                                    </h3>
+                                    <span className="bg-blue-100 text-primary text-xs font-bold px-2 py-1 rounded-full">3 Órdenes</span>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                        <thead className="bg-gray-50 dark:bg-gray-900">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Partida (PO#)</th>
+                                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Fecha</th>
+                                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Cliente</th>
+                                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Proveedor</th>
+                                                <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Importe Total</th>
+                                                <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Estatus</th>
+                                                <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                            <tr className="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary dark:text-blue-400">MGJD20240524001</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">24/05/2024</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium">INTERLAB</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">CT INT</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-mono text-right font-bold">$ 3,450.00</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Enviada</span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                                    <div className="flex justify-center items-center gap-3">
+                                                        <button className="text-gray-400 hover:text-primary dark:hover:text-blue-400 transition-colors tooltip-btn" title="Ver Detalles" onClick={() => navigate('/new-order')}>
+                                                            <span className="material-symbols-outlined">visibility</span>
+                                                        </button>
+                                                        <button className="text-gray-400 hover:text-secondary transition-colors tooltip-btn" title="Descargar PDF">
+                                                            <span className="material-symbols-outlined">picture_as_pdf</span>
+                                                        </button>
+                                                        <button className="text-primary dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors tooltip-btn relative group" onClick={() => setIsEmailModalOpen(true)} title="Enviar por Correo">
+                                                            <span className="material-symbols-outlined">forward_to_inbox</span>
+                                                            <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">Enviar por Correo</span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr className="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary dark:text-blue-400">MGJD20240520002</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">20/05/2024</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium">TECNOLOGIAS SA</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">INGRAM MICRO</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-mono text-right font-bold">$ 12,890.50</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">Pendiente</span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                                    <div className="flex justify-center items-center gap-3">
+                                                        <button className="text-gray-400 hover:text-primary dark:hover:text-blue-400 transition-colors" onClick={() => navigate('/new-order')}>
+                                                            <span className="material-symbols-outlined">visibility</span>
+                                                        </button>
+                                                        <button className="text-gray-400 hover:text-secondary transition-colors">
+                                                            <span className="material-symbols-outlined">picture_as_pdf</span>
+                                                        </button>
+                                                        <button className="text-primary dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors" onClick={() => setIsEmailModalOpen(true)}>
+                                                            <span className="material-symbols-outlined">forward_to_inbox</span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr className="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary dark:text-blue-400">MGJD20240515003</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">15/05/2024</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium">GOBIERNO</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">CVA</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-mono text-right font-bold">$ 850.00</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Enviada</span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                                    <div className="flex justify-center items-center gap-3">
+                                                        <button className="text-gray-400 hover:text-primary dark:hover:text-blue-400 transition-colors" onClick={() => navigate('/new-order')}>
+                                                            <span className="material-symbols-outlined">visibility</span>
+                                                        </button>
+                                                        <button className="text-gray-400 hover:text-secondary transition-colors">
+                                                            <span className="material-symbols-outlined">picture_as_pdf</span>
+                                                        </button>
+                                                        <button className="text-primary dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors" onClick={() => setIsEmailModalOpen(true)}>
+                                                            <span className="material-symbols-outlined">forward_to_inbox</span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div className="bg-surface-light dark:bg-surface-dark shadow-md rounded-lg overflow-hidden border border-border-light dark:border-border-dark opacity-75">
+                                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-between items-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors">
+                                    <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300 flex items-center gap-2">
+                                        <span className="material-symbols-outlined">calendar_month</span> Abril 2024
+                                    </h3>
+                                    <div className="flex items-center gap-4">
+                                        <span className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold px-2 py-1 rounded-full">5 Órdenes</span>
+                                        <span className="material-symbols-outlined text-gray-400">expand_more</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <ModalEmail isOpen={isEmailModalOpen} onClose={() => setIsEmailModalOpen(false)} />
+                </main>
+            );
+        };
+
+        // --- Main Application Component ---
+
+        const App = () => {
+            const [isDarkMode, setIsDarkMode] = useState(false);
+
+            useEffect(() => {
+                const html = document.documentElement;
+                if (isDarkMode) {
+                    html.classList.add('dark');
+                } else {
+                    html.classList.remove('dark');
+                }
+            }, [isDarkMode]);
+
+            const toggleTheme = () => {
+                setIsDarkMode(!isDarkMode);
+            };
+
+            return (
+                <MemoryRouter>
+                    <Navbar toggleTheme={toggleTheme} isDarkMode={isDarkMode} />
+                    <Routes>
+                        <Route path="/" element={<HistoryPage />} />
+                        <Route path="/new-order" element={<NewOrderPage />} />
+                    </Routes>
+                </MemoryRouter>
+            );
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

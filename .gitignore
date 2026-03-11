@@ -20,3 +20,4 @@ htmlcov/
 *.cover
 *.py,cover
 .pytest_cache/
+*.zip
